@@ -40,37 +40,41 @@ export function formatGutterHour(hour) {
 }
 
 /**
- * Get condition display label.
+ * Determine the dominant condition from numeric weather channels.
+ * Returns { icon, label } based on priority rules.
  */
-export function conditionLabel(condition) {
-  const labels = {
-    clear: 'Clear',
-    partly_cloudy: 'Partly Cloudy',
-    cloudy: 'Cloudy',
-    overcast: 'Overcast',
-    fog: 'Fog',
-    rain: 'Rain',
-    heavy_rain: 'Heavy Rain',
-    thunderstorm: 'Thunderstorm',
-    snow: 'Snow',
-  };
-  return labels[condition] || condition;
+function dominantCondition(hourData, isNight) {
+  if (hourData.visibility < 2000) {
+    return { icon: '🌫️', label: 'Fog' };
+  }
+  if (hourData.snowfall > 0) {
+    return { icon: '🌨️', label: 'Snow' };
+  }
+  if (hourData.precipitation > 0) {
+    return { icon: '🌧️', label: 'Rain' };
+  }
+  if (hourData.cloudCover > 70) {
+    return { icon: '☁️', label: 'Overcast' };
+  }
+  if (hourData.cloudCover > 30) {
+    return { icon: '☁️', label: 'Cloudy' };
+  }
+  if (hourData.cloudCover > 10) {
+    return { icon: isNight ? '☁️' : '⛅', label: 'Partly Cloudy' };
+  }
+  return { icon: isNight ? '🌙' : '☀️', label: 'Clear' };
 }
 
 /**
- * Get condition emoji/icon.
+ * Get condition display label from numeric channels.
  */
-export function conditionIcon(condition, isNight) {
-  const icons = {
-    clear: isNight ? '🌙' : '☀️',
-    partly_cloudy: isNight ? '☁️' : '⛅',
-    cloudy: '☁️',
-    overcast: '☁️',
-    fog: '🌫️',
-    rain: '🌧️',
-    heavy_rain: '🌧️',
-    thunderstorm: '⛈️',
-    snow: '🌨️',
-  };
-  return icons[condition] || '🌡️';
+export function conditionLabel(hourData, isNight) {
+  return dominantCondition(hourData, isNight).label;
+}
+
+/**
+ * Get condition emoji/icon from numeric channels.
+ */
+export function conditionIcon(hourData, isNight) {
+  return dominantCondition(hourData, isNight).icon;
 }

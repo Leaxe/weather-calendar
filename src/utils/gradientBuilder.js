@@ -11,9 +11,9 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
   const rawStops = [];
 
   // One stop per hour
-  for (const { hour, temp, condition } of hourlyData) {
+  for (const { hour, temp } of hourlyData) {
     const isNight = hour < sunrise || hour > sunset;
-    const color = weatherToColor(temp, condition, isNight);
+    const color = weatherToColor(temp, null, isNight);
     rawStops.push({ hour, pct: (hour / 24) * 100, color });
   }
 
@@ -36,9 +36,8 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
       const upperIdx = Math.min(23, lowerIdx + 1);
       const frac = h - lowerIdx;
       const temp = hourlyData[lowerIdx].temp * (1 - frac) + hourlyData[upperIdx].temp * frac;
-      const condition = hourlyData[Math.round(h)]?.condition || hourlyData[lowerIdx].condition;
       const isNight = h < sunrise || h > sunset;
-      const color = weatherToColor(temp, condition, isNight);
+      const color = weatherToColor(temp, null, isNight);
       rawStops.push({ hour: h, pct: (h / 24) * 100, color });
     }
   }
@@ -64,56 +63,42 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
 }
 
 /**
- * Maps every non-clear condition to an overlay type.
- * Returns null for 'clear' (no overlay needed).
- */
-function conditionToOverlay(condition) {
-  switch (condition) {
-    case 'partly_cloudy': return 'partly_cloudy';
-    case 'cloudy':        return 'cloudy';
-    case 'overcast':      return 'overcast';
-    case 'fog':           return 'fog';
-    case 'snow':          return 'snow';
-    case 'rain':
-    case 'heavy_rain':
-    case 'thunderstorm':  return 'rain';
-    default:              return null;
-  }
-}
-
-/**
- * Overlay opacity per type. Cloud/fog types get a fixed opacity
- * (they desaturate the gradient). Precipitation scales with precip %.
- */
-const fixedOpacity = {
-  partly_cloudy: 0.25,
-  cloudy: 0.45,
-  overcast: 0.6,
-  fog: 0.55,
-};
-
-/**
- * Builds per-hour weather condition overlays.
- * Every non-clear hour gets an overlay with a type and opacity.
- * Returns an array of { hour, type, opacity }.
+ * Builds full-day intensity curves per overlay type.
+ * Returns an array of { type, intensities: number[24] } — one entry per
+ * active overlay type, with a 24-element array of 0–1 intensities.
+ * Only includes types that have at least one non-zero hour.
  */
 export function buildWeatherOverlays(hourlyData) {
-  const overlays = [];
+  const cloud = new Float32Array(24);
+  const rain = new Float32Array(24);
+  const snow = new Float32Array(24);
+  const fog = new Float32Array(24);
 
-  for (const { hour, condition, precipitation } of hourlyData) {
-    const type = conditionToOverlay(condition);
-    if (!type) continue;
+  for (const h of hourlyData) {
+    const i = h.hour;
 
-    let opacity;
-    if (type === 'rain' || type === 'snow') {
-      // Precipitation opacity scales with chance
-      opacity = 0.2 + (Math.min(precipitation, 100) / 100) * 0.8;
-    } else {
-      opacity = fixedOpacity[type] || 0.3;
+    // Snow and rain suppress clouds
+    if (h.snowfall > 0) {
+      snow[i] = Math.min(1, h.snowfall / 2);
+    } else if (h.precipitation > 0 || h.precipProb > 40) {
+      rain[i] = h.precipitation > 0
+        ? Math.min(1, h.precipitation / 5)
+        : Math.min(1, (h.precipProb - 40) / 60 * 0.3);
+      rain[i] = Math.max(0.05, rain[i]);
+    } else if (h.cloudCover > 10) {
+      cloud[i] = h.cloudCover / 100;
     }
 
-    overlays.push({ hour, type, opacity });
+    // Fog layers with anything
+    if (h.visibility < 5000) {
+      fog[i] = 1 - h.visibility / 5000;
+    }
   }
 
-  return overlays;
+  const results = [];
+  if (cloud.some(v => v > 0)) results.push({ type: 'cloud', intensities: Array.from(cloud) });
+  if (rain.some(v => v > 0)) results.push({ type: 'rain', intensities: Array.from(rain) });
+  if (snow.some(v => v > 0)) results.push({ type: 'snow', intensities: Array.from(snow) });
+  if (fog.some(v => v > 0)) results.push({ type: 'fog', intensities: Array.from(fog) });
+  return results;
 }

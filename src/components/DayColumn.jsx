@@ -1,13 +1,11 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { buildDayGradient, buildWeatherOverlays } from '../utils/gradientBuilder';
 import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour, conditionIcon } from '../utils/timeUtils';
-import { getNoiseTexture } from '../utils/noiseTextures';
+import { getDayTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
 import EventCard from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
-
-const NOISE_TYPES = new Set(['partly_cloudy', 'cloudy', 'overcast', 'fog']);
 
 export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
   const [tooltip, setTooltip] = useState(null);
@@ -70,25 +68,20 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
           />
         ))}
 
-        {/* Weather condition overlays */}
-        {weatherOverlays.map((o) => {
-          const useNoise = NOISE_TYPES.has(o.type);
-          const style = {
-            top: o.hour * HOUR_HEIGHT,
-            height: HOUR_HEIGHT,
-            opacity: o.opacity,
-          };
-          if (useNoise) {
-            // Each hour gets a unique seed so adjacent hours look different
-            const tex = getNoiseTexture(o.type, dayIndex * 100 + o.hour);
-            style.backgroundImage = `url(${tex})`;
-            style.backgroundSize = 'cover';
-          }
+        {/* Weather condition overlays — one full-day texture per type */}
+        {weatherOverlays.map(({ type, intensities }) => {
+          const seed = dayIndex * 100 + type.charCodeAt(0);
+          const tex = getDayTexture(type, intensities, seed);
           return (
             <div
-              key={`wx-${o.hour}`}
-              className={`wx-overlay ${useNoise ? '' : `wx-overlay--${o.type}`}`}
-              style={style}
+              key={`wx-${type}`}
+              className="wx-overlay"
+              style={{
+                top: 0,
+                height: TOTAL_HEIGHT,
+                backgroundImage: `url(${tex})`,
+                backgroundSize: '100% 100%',
+              }}
             />
           );
         })}
@@ -116,8 +109,8 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
                   className="day-column__detail-chip"
                   style={{ top: h.hour * HOUR_HEIGHT + HOUR_HEIGHT / 2 - 10 }}
                 >
-                  {conditionIcon(h.condition, isNight)} {Math.round(h.temp)}°
-                  {h.precipitation > 20 ? ` ${h.precipitation}%` : ''}
+                  {conditionIcon(h, isNight)} {Math.round(h.temp)}°
+                  {h.precipProb > 20 ? ` ${h.precipProb}%` : ''}
                 </div>
               );
             })}
