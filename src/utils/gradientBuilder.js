@@ -1,37 +1,37 @@
+import chroma from 'chroma-js';
 import { weatherToColor } from './colorScale';
 
 /**
- * Builds a CSS linear-gradient string from hourly weather data.
+ * Builds a CSS linear-gradient from hourly weather data.
  *
- * Instead of injecting hard-coded sunrise/sunset color stops, we add
- * extra interpolation points around dawn/dusk so the temperature-based
- * gradient naturally warms up there — the existing night-darkening in
- * weatherToColor already handles the day/night transition.
+ * Generates color stops in LAB space via weatherToColor, then uses
+ * chroma.js to add smooth sub-hour interpolation around sunrise/sunset.
  */
 export function buildDayGradient(hourlyData, sunrise, sunset) {
-  const stops = [];
+  const rawStops = [];
 
-  // Generate a color stop for each hour
+  // One stop per hour
   for (const { hour, temp, condition } of hourlyData) {
     const isNight = hour < sunrise || hour > sunset;
-    const pct = (hour / 24) * 100;
     const color = weatherToColor(temp, condition, isNight);
-    stops.push({ pct, color });
+    rawStops.push({ hour, pct: (hour / 24) * 100, color });
   }
 
-  // Add extra sub-hour stops around sunrise and sunset so the transition
-  // between dark-night and bright-day isn't a single abrupt jump.
-  const transitionOffsets = [-0.6, -0.3, 0, 0.3, 0.6];
+  // Add sub-hour stops around sunrise/sunset for a smooth day↔night blend.
+  // We interpolate between the "night" and "day" color at the boundary
+  // using chroma.mix in LAB space for perceptually even fading.
+  const transitionWidth = 0.8; // hours on each side
+  const steps = 5;
 
   for (const anchor of [sunrise, sunset]) {
-    for (const offset of transitionOffsets) {
-      const h = anchor + offset;
-      if (h < 0 || h > 24) continue;
-      // Don't duplicate an existing whole-hour stop
-      if (Number.isInteger(h)) continue;
+    const startH = anchor - transitionWidth;
 
-      const pct = (h / 24) * 100;
-      // Interpolate temp between the two surrounding hours
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const h = startH + t * (transitionWidth * 2);
+      if (h < 0 || h > 24 || Number.isInteger(h)) continue;
+
+      // Interpolate temperature
       const lowerIdx = Math.max(0, Math.min(23, Math.floor(h)));
       const upperIdx = Math.min(23, lowerIdx + 1);
       const frac = h - lowerIdx;
@@ -39,14 +39,27 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
       const condition = hourlyData[Math.round(h)]?.condition || hourlyData[lowerIdx].condition;
       const isNight = h < sunrise || h > sunset;
       const color = weatherToColor(temp, condition, isNight);
-      stops.push({ pct, color });
+      rawStops.push({ hour: h, pct: (h / 24) * 100, color });
     }
   }
 
-  // Sort by percentage
-  stops.sort((a, b) => a.pct - b.pct);
+  rawStops.sort((a, b) => a.pct - b.pct);
 
-  const gradientStops = stops.map(s => `${s.color} ${s.pct.toFixed(2)}%`).join(', ');
+  // Now smooth adjacent stops using LAB interpolation — insert midpoints
+  // between every pair for an even richer gradient.
+  const finalStops = [];
+  for (let i = 0; i < rawStops.length; i++) {
+    finalStops.push(rawStops[i]);
+    if (i < rawStops.length - 1) {
+      const a = rawStops[i];
+      const b = rawStops[i + 1];
+      const midPct = (a.pct + b.pct) / 2;
+      const midColor = chroma.mix(a.color, b.color, 0.5, 'lab').css();
+      finalStops.push({ pct: midPct, color: midColor });
+    }
+  }
+
+  const gradientStops = finalStops.map(s => `${s.color} ${s.pct.toFixed(2)}%`).join(', ');
   return `linear-gradient(to bottom, ${gradientStops})`;
 }
 

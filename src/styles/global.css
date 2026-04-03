@@ -63,35 +63,6 @@ html, body, #root {
   color: var(--text-secondary);
 }
 
-/* ===== Detail Toggle ===== */
-.detail-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid var(--border-color-strong);
-  border-radius: 20px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.detail-toggle:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary);
-}
-
-.detail-toggle--active {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.detail-toggle__icon {
-  font-size: 15px;
-}
 
 /* ===== Week Header ===== */
 .week-header {
@@ -304,44 +275,6 @@ html, body, #root {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* ===== Weather Tooltip ===== */
-.weather-tooltip {
-  position: absolute;
-  z-index: 10;
-  background: rgba(20, 20, 40, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  padding: 10px 14px;
-  pointer-events: none;
-  min-width: 140px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.weather-tooltip__time {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.weather-tooltip__temp {
-  font-size: 22px;
-  font-weight: 300;
-  margin-bottom: 2px;
-}
-
-.weather-tooltip__condition {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-.weather-tooltip__details {
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
 
 /* ===== Details Overlay ===== */
 .day-column__details-overlay {

@@ -1,14 +1,18 @@
+import { Toggle } from '@/components/ui/toggle';
+import { Thermometer } from 'lucide-react';
+
 export default function DetailToggle({ showDetails, onToggle }) {
   return (
-    <button
-      className={`detail-toggle ${showDetails ? 'detail-toggle--active' : ''}`}
-      onClick={onToggle}
-      title={showDetails ? 'Hide weather details' : 'Show weather details'}
+    <Toggle
+      variant="outline"
+      size="sm"
+      pressed={showDetails}
+      onPressedChange={onToggle}
+      aria-label={showDetails ? 'Hide weather details' : 'Show weather details'}
+      className="gap-1.5 rounded-full px-3 text-xs"
     >
-      <span className="detail-toggle__icon">🌡️</span>
-      <span className="detail-toggle__label">
-        {showDetails ? 'Hide Details' : 'Weather Details'}
-      </span>
-    </button>
+      <Thermometer className="h-3.5 w-3.5" />
+      {showDetails ? 'Hide Details' : 'Weather Details'}
+    </Toggle>
   );
 }
