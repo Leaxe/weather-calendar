@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { formatHour, conditionLabel, conditionIcon } from '../utils/timeUtils';
 import type { HourlyData } from '../types';
 
@@ -25,9 +26,9 @@ export default function WeatherTooltip({
 
   const isNight = hour < sunrise || hour > sunset;
 
-  return (
+  return createPortal(
     <div
-      className="pointer-events-none absolute z-50 min-w-[140px] rounded-lg border border-border/50 bg-popover/95 px-3.5 py-2.5 shadow-lg backdrop-blur-md"
+      className="pointer-events-none fixed z-50 min-w-[140px] rounded-lg border border-border/50 bg-popover/95 px-3.5 py-2.5 shadow-lg backdrop-blur-md"
       style={{ top: position.y, left: position.x }}
     >
       <div className="mb-1 text-xs text-muted-foreground">
@@ -63,6 +64,7 @@ export default function WeatherTooltip({
           </span>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

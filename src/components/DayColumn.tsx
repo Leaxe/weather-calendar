@@ -34,21 +34,22 @@ export default function DayColumn({ dayData, events, showDetails }: DayColumnPro
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = colRef.current!.getBoundingClientRect();
-      const relativeY = e.clientY - rect.top;
-      const scrollParent = colRef.current!.closest('.week-grid');
-      const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
-      const hour = pixelToHour(relativeY + scrollTop);
+      // rect.top is already scroll-adjusted (goes negative as column scrolls up)
+      // so e.clientY - rect.top gives the correct position within the full gradient
+      const gradientY = e.clientY - rect.top;
+      const hour = pixelToHour(gradientY);
       const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
       const hourData = dayData.hourly[hourIndex];
 
+      // Tooltip positioned in viewport-fixed coordinates via position:fixed
       const colWidth = rect.width;
-      let x = e.clientX - rect.left + 14;
-      if (x + 160 > colWidth) x = e.clientX - rect.left - 160;
+      let x = e.clientX + 14;
+      if (e.clientX - rect.left + 14 + 160 > colWidth) x = e.clientX - 160;
 
       setTooltip({
         hourData,
         hour,
-        position: { x, y: relativeY + 14 },
+        position: { x, y: e.clientY + 14 },
       });
     },
     [dayData],
