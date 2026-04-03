@@ -26,6 +26,14 @@ export interface CalendarEvent {
   endHour: number;
 }
 
+export interface GeoLocation {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  admin1?: string;
+}
+
 export type OverlayType = 'cloud' | 'rain' | 'snow' | 'fog';
 
 export interface WeatherOverlay {

@@ -36,7 +36,7 @@ The calendar is a vertical scrollable grid (like Google Calendar week view). Eac
 - **Continuous weather model**: Weather data uses numeric channels (cloudCover 0-100, precipitation mm, snowfall cm, visibility m) instead of discrete condition strings. This allows smooth visual transitions between hours.
 - **Overlay priority**: Snow > Rain > Clouds (mutually exclusive), Fog can layer with anything.
 - **Equal luminance**: Temperature hues are normalized to LAB L=62 so overlays look equally visible regardless of the underlying temperature color.
-- **Mock data only**: No API integration — all weather data is hardcoded keyframe-interpolated fixtures for one week.
+- **Live weather via Open-Meteo**: Free API, no key required. User selects a city via geocoding search; forecast is fetched and mapped to the same `DayData`/`HourlyData` types. Mock data is the fallback when no location is selected or on API error.
 
 ## Project Structure
 
@@ -44,12 +44,14 @@ See [src/ARCHITECTURE.md](src/ARCHITECTURE.md) for detailed module documentation
 
 ```
 src/
-├── types.ts              # Shared domain types (HourlyData, DayData, CalendarEvent, etc.)
+├── types.ts              # Shared domain types (HourlyData, DayData, CalendarEvent, GeoLocation, etc.)
 ├── App.tsx               # Root component — layout, state, data wiring
 ├── main.tsx              # Entry point
-├── data/                 # Mock data fixtures
+├── services/             # API layer (Open-Meteo weather + geocoding)
+├── hooks/                # React hooks (useWeather, usePersistedLocation)
+├── data/                 # Mock data fixtures (fallback)
 ├── utils/                # Core logic (color science, gradients, canvas textures, time math)
-├── components/           # UI components (calendar grid, day columns, events, tooltips)
+├── components/           # UI components (calendar grid, day columns, events, tooltips, location picker)
 │   └── ui/               # shadcn/ui primitives (button, toggle, tooltip)
 ├── styles/               # Custom CSS (global.css)
 └── lib/                  # Utility helpers (cn() for tailwind class merging)

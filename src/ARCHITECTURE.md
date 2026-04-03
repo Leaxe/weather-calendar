@@ -8,6 +8,7 @@ All shared interfaces live here. Key types:
 - `HourlyData` — one hour's weather: temp, cloudCover, precipProb, precipitation, snowfall, visibility, windSpeed, humidity
 - `DayData` — a day: date, dayName, sunrise/sunset times, 24 HourlyData entries
 - `CalendarEvent` — an event: id, title, day index, start/end hour
+- `GeoLocation` — a city: name, lat/lon, country, optional admin1 (state/province)
 - `OverlayType` — `'cloud' | 'rain' | 'snow' | 'fog'`
 - `WeatherOverlay` — a type + 24-element intensity array
 
@@ -18,6 +19,21 @@ Generates a week of weather data using keyframe-based cosine interpolation. Each
 
 ### `mockEvents.ts`
 Static array of `CalendarEvent` objects. Events are positioned by day index (0=Mon) and decimal start/end hours.
+
+## API Layer (`services/`)
+
+### `weatherApi.ts`
+Two functions for the Open-Meteo API (free, no key required):
+- `searchCities(query, signal?)` — geocoding search, returns `GeoLocation[]`
+- `fetchWeekForecast(lat, lon, signal?)` — 7-day hourly forecast, maps the API response into `DayData[]` matching the same types the mock data uses. Handles field renames (`temperature_2m→temp`, `cloud_cover→cloudCover`, etc.) and parses sunrise/sunset ISO strings into fractional hours.
+
+## Hooks (`hooks/`)
+
+### `useWeather.ts`
+React hook: `useWeather(location: GeoLocation | null) → { data, isLoading, error, source }`. When location is null, returns mock data. When set, fetches from the API with AbortController cleanup and a 60-second cache. Falls back to mock data on error.
+
+### `usePersistedLocation.ts`
+Reads/writes the selected `GeoLocation` to localStorage (`weather-calendar-location` key). Returns `[location, setLocation]` tuple.
 
 ## Color & Gradient Engine (`utils/`)
 
@@ -42,7 +58,7 @@ Constants (`HOUR_HEIGHT = 60px`, `TOTAL_HEIGHT = 1440px`) and helpers for hour�
 ## Components
 
 ### Layout
-- `App.tsx` — holds `showDetails` state, renders header + WeekHeader + WeekGrid
+- `App.tsx` — holds `showDetails` state, wires `usePersistedLocation` + `useWeather` hooks, renders header (with LocationPicker + DetailToggle), loading/error banners, WeekHeader + WeekGrid
 - `WeekHeader.tsx` — day name, date number, high/low temp per column
 - `WeekGrid.tsx` — scrollable container with TimeGutter + 7 DayColumns, auto-scrolls to 7 AM
 - `TimeGutter.tsx` — left column with hour labels (12 AM–11 PM)
@@ -64,6 +80,7 @@ The core visual component. Renders:
 - `EventCard.tsx` — absolutely positioned card, sized by event duration
 - `WeatherTooltip.tsx` — cursor-following tooltip showing temp, condition, precip, wind, visibility
 - `DetailToggle.tsx` — shadcn Toggle button to pin weather detail chips on all columns
+- `LocationPicker.tsx` — city search dropdown in the header. Debounced input calls geocoding API, displays results, persists selection via parent callback. Uses shadcn Button + lucide icons (MapPin, Search, X).
 
 ### UI Primitives (`components/ui/`)
 shadcn/ui components (Button, Toggle, Tooltip) — owned source files, styled with Tailwind + CSS variables.
