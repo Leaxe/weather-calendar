@@ -131,7 +131,6 @@ export default function DayColumn({ dayData, events, showDetails }: DayColumnPro
                     style={{ top: h.hour * HOUR_HEIGHT + HOUR_HEIGHT / 2 - 10 }}
                   >
                     {conditionIcon(h, isNight)} {Math.round(h.temp)}°
-                    {h.precipProb > 20 ? ` ${h.precipProb}%` : ''}
                   </div>
                 );
               })}

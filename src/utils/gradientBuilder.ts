@@ -78,10 +78,8 @@ export function buildDayGradient(
 const CLOUD_MIN_PCT = 10;
 const CLOUD_SCALE = 100; // cloudCover / CLOUD_SCALE = intensity
 
-// Rain: precip probability threshold when no actual precipitation, and max mm for full intensity
-const RAIN_PROB_THRESHOLD = 40;
+// Rain: max mm for full intensity
 const RAIN_MAX_MM = 5; // precipitation mm that maps to intensity 1.0
-const RAIN_MIN_INTENSITY = 0.05;
 
 // Snow: max cm for full intensity
 const SNOW_MAX_CM = 2; // snowfall cm that maps to intensity 1.0
@@ -107,12 +105,8 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
     // Snow and rain suppress clouds
     if (h.snowfall > 0) {
       snow[i] = Math.min(1, h.snowfall / SNOW_MAX_CM);
-    } else if (h.precipitation > 0 || h.precipProb > RAIN_PROB_THRESHOLD) {
-      rain[i] =
-        h.precipitation > 0
-          ? Math.min(1, h.precipitation / RAIN_MAX_MM)
-          : Math.min(1, ((h.precipProb - RAIN_PROB_THRESHOLD) / (100 - RAIN_PROB_THRESHOLD)) * 0.3);
-      rain[i] = Math.max(RAIN_MIN_INTENSITY, rain[i]);
+    } else if (h.precipitation > 0) {
+      rain[i] = Math.min(1, h.precipitation / RAIN_MAX_MM);
     } else if (h.cloudCover > CLOUD_MIN_PCT) {
       cloud[i] = h.cloudCover / CLOUD_SCALE;
     }

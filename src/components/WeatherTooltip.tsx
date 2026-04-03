@@ -42,9 +42,6 @@ export default function WeatherTooltip({
         <span>
           {'\u2601\uFE0F'} {hourData.cloudCover}%
         </span>
-        <span>
-          {'\u{1F4A7}'} {hourData.precipProb}%
-        </span>
         {hourData.precipitation > 0 && (
           <span>
             {'\u{1F327}\uFE0F'} {hourData.precipitation}mm

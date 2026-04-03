@@ -5,7 +5,7 @@
 ## Domain Types (`types.ts`)
 
 All shared interfaces live here. Key types:
-- `HourlyData` — one hour's weather: temp, cloudCover, precipProb, precipitation, snowfall, visibility, windSpeed, humidity
+- `HourlyData` — one hour's weather: temp, cloudCover, precipitation, snowfall, visibility, windSpeed, humidity
 - `DayData` — a day: date, dayName, sunrise/sunset times, 24 HourlyData entries
 - `CalendarEvent` — an event: id, title, day index, start/end hour
 - `GeoLocation` — a city: name, lat/lon, country, optional admin1 (state/province)

@@ -40,12 +40,10 @@ export async function searchCities(query: string, signal?: AbortSignal): Promise
 const HOURLY_PARAMS = [
   'temperature_2m',
   'cloud_cover',
-  'precipitation_probability',
   'precipitation',
   'snowfall',
   'visibility',
   'wind_speed_10m',
-  'relative_humidity_2m',
 ].join(',');
 
 function buildParams(
@@ -124,12 +122,10 @@ interface ApiResponse {
     time: string[];
     temperature_2m: number[];
     cloud_cover: number[];
-    precipitation_probability: (number | null)[];
     precipitation: number[];
     snowfall: number[];
     visibility: number[];
     wind_speed_10m: number[];
-    relative_humidity_2m: number[];
   };
 }
 
@@ -156,12 +152,10 @@ function mapApiResponse(data: ApiResponse): DayData[] {
         hour: h,
         temp: hourly.temperature_2m[i] ?? 0,
         cloudCover: hourly.cloud_cover[i] ?? 0,
-        precipProb: hourly.precipitation_probability[i] ?? 0,
         precipitation: hourly.precipitation[i] ?? 0,
         snowfall: hourly.snowfall[i] ?? 0,
         visibility: hourly.visibility[i] ?? 16000,
         windSpeed: hourly.wind_speed_10m[i] ?? 0,
-        humidity: hourly.relative_humidity_2m[i] ?? 50,
       });
     }
 

@@ -2,12 +2,10 @@ export interface HourlyData {
   hour: number;
   temp: number;
   cloudCover: number;
-  precipProb: number;
   precipitation: number;
   snowfall: number;
   visibility: number;
   windSpeed: number;
-  humidity: number;
 }
 
 export interface DayData {
