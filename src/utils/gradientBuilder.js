@@ -51,31 +51,22 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
 }
 
 /**
- * Builds precipitation overlay ranges from hourly data.
- * Returns an array of { startHour, endHour, type } for contiguous precipitation spans.
+ * Builds per-hour precipitation overlays from hourly data.
+ * Each entry has its own opacity derived from precipitation %.
+ * Returns an array of { hour, type, opacity }.
  */
-export function buildPrecipitationRanges(hourlyData) {
-  const ranges = [];
-  let current = null;
+export function buildPrecipitationOverlays(hourlyData) {
+  const overlays = [];
 
-  for (const { hour, condition } of hourlyData) {
+  for (const { hour, condition, precipitation } of hourlyData) {
     const isPrecip = ['rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(condition);
-    const type = condition === 'snow' ? 'snow' : isPrecip ? 'rain' : null;
+    if (!isPrecip) continue;
 
-    if (type) {
-      if (current && current.type === type) {
-        current.endHour = hour + 1;
-      } else {
-        if (current) ranges.push(current);
-        current = { startHour: hour, endHour: hour + 1, type };
-      }
-    } else {
-      if (current) {
-        ranges.push(current);
-        current = null;
-      }
-    }
+    const type = condition === 'snow' ? 'snow' : 'rain';
+    // Map precipitation 0–100% → opacity 0.15–1.0
+    const opacity = 0.15 + (Math.min(precipitation, 100) / 100) * 0.85;
+    overlays.push({ hour, type, opacity });
   }
-  if (current) ranges.push(current);
-  return ranges;
+
+  return overlays;
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { buildDayGradient, buildPrecipitationRanges } from '../utils/gradientBuilder';
+import { buildDayGradient, buildPrecipitationOverlays } from '../utils/gradientBuilder';
 import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour, conditionIcon } from '../utils/timeUtils';
 import SunMarker from './SunMarker';
 import EventCard from './EventCard';
@@ -15,8 +15,8 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
     [dayData],
   );
 
-  const precipRanges = useMemo(
-    () => buildPrecipitationRanges(dayData.hourly),
+  const precipOverlays = useMemo(
+    () => buildPrecipitationOverlays(dayData.hourly),
     [dayData],
   );
 
@@ -67,14 +67,15 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
           />
         ))}
 
-        {/* Precipitation pattern overlays */}
-        {precipRanges.map((range, i) => (
+        {/* Precipitation pattern overlays — opacity scales with precip % */}
+        {precipOverlays.map((o) => (
           <div
-            key={`precip-${i}`}
-            className={`precip-overlay precip-overlay--${range.type}`}
+            key={`precip-${o.hour}`}
+            className={`precip-overlay precip-overlay--${o.type}`}
             style={{
-              top: range.startHour * HOUR_HEIGHT,
-              height: (range.endHour - range.startHour) * HOUR_HEIGHT,
+              top: o.hour * HOUR_HEIGHT,
+              height: HOUR_HEIGHT,
+              opacity: o.opacity,
             }}
           />
         ))}
