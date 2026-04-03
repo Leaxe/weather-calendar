@@ -2,9 +2,16 @@ import { useRef, useEffect } from 'react';
 import TimeGutter from './TimeGutter';
 import DayColumn from './DayColumn';
 import { HOUR_HEIGHT } from '../utils/timeUtils';
+import type { DayData, CalendarEvent } from '../types';
 
-export default function WeekGrid({ weekData, events, showDetails }) {
-  const scrollRef = useRef(null);
+interface WeekGridProps {
+  weekData: DayData[];
+  events: CalendarEvent[];
+  showDetails: boolean;
+}
+
+export default function WeekGrid({ weekData, events, showDetails }: WeekGridProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to ~7 AM on mount
   useEffect(() => {

@@ -1,6 +1,11 @@
 import { hourToPixel, HOUR_HEIGHT } from '../utils/timeUtils';
+import type { CalendarEvent } from '../types';
 
-export default function EventCard({ event }) {
+interface EventCardProps {
+  event: CalendarEvent;
+}
+
+export default function EventCard({ event }: EventCardProps) {
   const top = hourToPixel(event.startHour);
   const height = (event.endHour - event.startHour) * HOUR_HEIGHT;
   const isShort = height < 36;

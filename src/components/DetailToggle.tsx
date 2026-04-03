@@ -1,7 +1,12 @@
 import { Toggle } from '@/components/ui/toggle';
 import { Thermometer } from 'lucide-react';
 
-export default function DetailToggle({ showDetails, onToggle }) {
+interface DetailToggleProps {
+  showDetails: boolean;
+  onToggle: () => void;
+}
+
+export default function DetailToggle({ showDetails, onToggle }: DetailToggleProps) {
   return (
     <Toggle
       variant="outline"

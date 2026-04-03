@@ -17,18 +17,11 @@ export default function App() {
           <span className="app-header__subtitle">Apr 6 – 12, 2026</span>
         </div>
         <div className="app-header__right">
-          <DetailToggle
-            showDetails={showDetails}
-            onToggle={() => setShowDetails((s) => !s)}
-          />
+          <DetailToggle showDetails={showDetails} onToggle={() => setShowDetails((s) => !s)} />
         </div>
       </header>
       <WeekHeader weekData={weekData} />
-      <WeekGrid
-        weekData={weekData}
-        events={mockEvents}
-        showDetails={showDetails}
-      />
+      <WeekGrid weekData={weekData} events={mockEvents} showDetails={showDetails} />
     </div>
   );
 }

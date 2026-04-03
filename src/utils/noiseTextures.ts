@@ -1,3 +1,5 @@
+import type { OverlayType } from '../types';
+
 /**
  * Generates full-day weather overlay textures using Canvas API.
  * One tall canvas per overlay type per day, with density varying
@@ -5,7 +7,7 @@
  */
 
 // Seeded PRNG (mulberry32)
-function mulberry32(seed) {
+function mulberry32(seed: number): () => number {
   return function () {
     seed |= 0;
     seed = (seed + 0x6d2b79f5) | 0;
@@ -18,7 +20,47 @@ function mulberry32(seed) {
 const HOUR_PX = 60; // must match HOUR_HEIGHT in timeUtils
 const DAY_HEIGHT = HOUR_PX * 24;
 
-const configs = {
+interface CloudFogConfig {
+  passes: number;
+  densityPerHour: number;
+  minRadius: number;
+  maxRadius: number;
+  yStretch: number;
+  minAlpha: number;
+  maxAlpha: number;
+  color: string;
+  blur: number;
+}
+
+interface RainConfig {
+  densityPerHour: number;
+  minLength: number;
+  maxLength: number;
+  strokeWidth: number;
+  angle: number;
+  color: string;
+  minAlpha: number;
+  maxAlpha: number;
+}
+
+interface SnowConfig {
+  densityPerHour: number;
+  minRadius: number;
+  maxRadius: number;
+  color: string;
+  minAlpha: number;
+  maxAlpha: number;
+  blur: number;
+}
+
+interface Configs {
+  cloud: CloudFogConfig;
+  fog: CloudFogConfig;
+  rain: RainConfig;
+  snow: SnowConfig;
+}
+
+const configs: Configs = {
   cloud: {
     passes: 3,
     densityPerHour: 28,
@@ -66,7 +108,7 @@ const configs = {
  * Sample the intensity curve at a given pixel y-position.
  * Interpolates linearly between hourly values for smooth variation.
  */
-function sampleIntensity(intensities, y) {
+function sampleIntensity(intensities: number[], y: number): number {
   const hour = y / HOUR_PX;
   const lo = Math.max(0, Math.min(23, Math.floor(hour)));
   const hi = Math.min(23, lo + 1);
@@ -74,19 +116,27 @@ function sampleIntensity(intensities, y) {
   return intensities[lo] * (1 - frac) + intensities[hi] * frac;
 }
 
+interface GenerateTextureParams {
+  type: OverlayType;
+  intensities: number[];
+  seed: number;
+  width?: number;
+}
+
 /**
  * Generate a full-day texture for an overlay type.
- * @param {string} type - 'cloud' | 'rain' | 'snow' | 'fog'
- * @param {number[]} intensities - 24-element array of 0-1 values
- * @param {number} seed - PRNG seed
- * @param {number} width - Canvas width
  */
-export function generateDayTexture({ type, intensities, seed, width = 200 }) {
+export function generateDayTexture({
+  type,
+  intensities,
+  seed,
+  width = 200,
+}: GenerateTextureParams): string {
   if (typeof document === 'undefined') return '';
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = DAY_HEIGHT;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d')!;
   const rand = mulberry32(seed);
 
   if (type === 'rain') {
@@ -100,7 +150,13 @@ export function generateDayTexture({ type, intensities, seed, width = 200 }) {
   return canvas.toDataURL();
 }
 
-function drawClouds(ctx, rand, width, intensities, type) {
+function drawClouds(
+  ctx: CanvasRenderingContext2D,
+  rand: () => number,
+  width: number,
+  intensities: number[],
+  type: 'cloud' | 'fog',
+): void {
   const cfg = configs[type];
 
   for (let pass = 0; pass < cfg.passes; pass++) {
@@ -117,7 +173,10 @@ function drawClouds(ctx, rand, width, intensities, type) {
         const rx = cfg.minRadius + rand() * (cfg.maxRadius - cfg.minRadius);
         const ry = rx * cfg.yStretch;
         // Alpha scales with the local intensity at this exact y position
-        const localIntensity = sampleIntensity(intensities, Math.max(0, Math.min(DAY_HEIGHT - 1, y)));
+        const localIntensity = sampleIntensity(
+          intensities,
+          Math.max(0, Math.min(DAY_HEIGHT - 1, y)),
+        );
         const alpha = (cfg.minAlpha + rand() * (cfg.maxAlpha - cfg.minAlpha)) * localIntensity;
 
         ctx.save();
@@ -136,7 +195,7 @@ function drawClouds(ctx, rand, width, intensities, type) {
     const sf = cfg.blur;
     small.width = Math.ceil(width * sf);
     small.height = Math.ceil(DAY_HEIGHT * sf);
-    const sCtx = small.getContext('2d');
+    const sCtx = small.getContext('2d')!;
     sCtx.drawImage(ctx.canvas, 0, 0, small.width, small.height);
     ctx.clearRect(0, 0, width, DAY_HEIGHT);
     ctx.imageSmoothingEnabled = true;
@@ -145,7 +204,12 @@ function drawClouds(ctx, rand, width, intensities, type) {
   }
 }
 
-function drawRain(ctx, rand, width, intensities) {
+function drawRain(
+  ctx: CanvasRenderingContext2D,
+  rand: () => number,
+  width: number,
+  intensities: number[],
+): void {
   const cfg = configs.rain;
   const angleRad = (cfg.angle * Math.PI) / 180;
 
@@ -178,7 +242,12 @@ function drawRain(ctx, rand, width, intensities) {
   }
 }
 
-function drawSnow(ctx, rand, width, intensities) {
+function drawSnow(
+  ctx: CanvasRenderingContext2D,
+  rand: () => number,
+  width: number,
+  intensities: number[],
+): void {
   const cfg = configs.snow;
 
   for (let hour = 0; hour < 24; hour++) {
@@ -218,11 +287,17 @@ function drawSnow(ctx, rand, width, intensities) {
           const by = cy * armLen * branchPos;
           ctx.beginPath();
           ctx.moveTo(bx, by);
-          ctx.lineTo(bx + Math.cos(angle + Math.PI / 4) * branchLen, by + Math.sin(angle + Math.PI / 4) * branchLen);
+          ctx.lineTo(
+            bx + Math.cos(angle + Math.PI / 4) * branchLen,
+            by + Math.sin(angle + Math.PI / 4) * branchLen,
+          );
           ctx.stroke();
           ctx.beginPath();
           ctx.moveTo(bx, by);
-          ctx.lineTo(bx + Math.cos(angle - Math.PI / 4) * branchLen, by + Math.sin(angle - Math.PI / 4) * branchLen);
+          ctx.lineTo(
+            bx + Math.cos(angle - Math.PI / 4) * branchLen,
+            by + Math.sin(angle - Math.PI / 4) * branchLen,
+          );
           ctx.stroke();
         }
         ctx.beginPath();
@@ -243,7 +318,7 @@ function drawSnow(ctx, rand, width, intensities) {
     const sf = cfg.blur;
     small.width = Math.ceil(width * sf);
     small.height = Math.ceil(DAY_HEIGHT * sf);
-    const sCtx = small.getContext('2d');
+    const sCtx = small.getContext('2d')!;
     sCtx.drawImage(ctx.canvas, 0, 0, small.width, small.height);
     ctx.clearRect(0, 0, width, DAY_HEIGHT);
     ctx.imageSmoothingEnabled = true;
@@ -253,15 +328,15 @@ function drawSnow(ctx, rand, width, intensities) {
 }
 
 // Cache by key
-const textureCache = new Map();
+const textureCache = new Map<string, string>();
 
 /**
  * Get a full-day texture data URL, cached.
  */
-export function getDayTexture(type, intensities, seed) {
-  const key = `${type}-${seed}-${intensities.map(v => v.toFixed(2)).join(',')}`;
+export function getDayTexture(type: OverlayType, intensities: number[], seed: number): string {
+  const key = `${type}-${seed}-${intensities.map((v) => v.toFixed(2)).join(',')}`;
   if (!textureCache.has(key)) {
     textureCache.set(key, generateDayTexture({ type, intensities, seed }));
   }
-  return textureCache.get(key);
+  return textureCache.get(key)!;
 }

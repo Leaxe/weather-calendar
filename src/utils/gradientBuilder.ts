@@ -1,5 +1,12 @@
 import chroma from 'chroma-js';
 import { weatherToColor } from './colorScale';
+import type { HourlyData, WeatherOverlay } from '../types';
+
+interface GradientStop {
+  hour?: number;
+  pct: number;
+  color: string;
+}
 
 /**
  * Builds a CSS linear-gradient from hourly weather data.
@@ -7,8 +14,12 @@ import { weatherToColor } from './colorScale';
  * Generates color stops in LAB space via weatherToColor, then uses
  * chroma.js to add smooth sub-hour interpolation around sunrise/sunset.
  */
-export function buildDayGradient(hourlyData, sunrise, sunset) {
-  const rawStops = [];
+export function buildDayGradient(
+  hourlyData: HourlyData[],
+  sunrise: number,
+  sunset: number,
+): string {
+  const rawStops: GradientStop[] = [];
 
   // One stop per hour
   for (const { hour, temp } of hourlyData) {
@@ -46,7 +57,7 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
 
   // Now smooth adjacent stops using LAB interpolation — insert midpoints
   // between every pair for an even richer gradient.
-  const finalStops = [];
+  const finalStops: GradientStop[] = [];
   for (let i = 0; i < rawStops.length; i++) {
     finalStops.push(rawStops[i]);
     if (i < rawStops.length - 1) {
@@ -58,7 +69,7 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
     }
   }
 
-  const gradientStops = finalStops.map(s => `${s.color} ${s.pct.toFixed(2)}%`).join(', ');
+  const gradientStops = finalStops.map((s) => `${s.color} ${s.pct.toFixed(2)}%`).join(', ');
   return `linear-gradient(to bottom, ${gradientStops})`;
 }
 
@@ -68,7 +79,7 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
  * active overlay type, with a 24-element array of 0–1 intensities.
  * Only includes types that have at least one non-zero hour.
  */
-export function buildWeatherOverlays(hourlyData) {
+export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[] {
   const cloud = new Float32Array(24);
   const rain = new Float32Array(24);
   const snow = new Float32Array(24);
@@ -81,9 +92,10 @@ export function buildWeatherOverlays(hourlyData) {
     if (h.snowfall > 0) {
       snow[i] = Math.min(1, h.snowfall / 2);
     } else if (h.precipitation > 0 || h.precipProb > 40) {
-      rain[i] = h.precipitation > 0
-        ? Math.min(1, h.precipitation / 5)
-        : Math.min(1, (h.precipProb - 40) / 60 * 0.3);
+      rain[i] =
+        h.precipitation > 0
+          ? Math.min(1, h.precipitation / 5)
+          : Math.min(1, ((h.precipProb - 40) / 60) * 0.3);
       rain[i] = Math.max(0.05, rain[i]);
     } else if (h.cloudCover > 10) {
       cloud[i] = h.cloudCover / 100;
@@ -95,10 +107,10 @@ export function buildWeatherOverlays(hourlyData) {
     }
   }
 
-  const results = [];
-  if (cloud.some(v => v > 0)) results.push({ type: 'cloud', intensities: Array.from(cloud) });
-  if (rain.some(v => v > 0)) results.push({ type: 'rain', intensities: Array.from(rain) });
-  if (snow.some(v => v > 0)) results.push({ type: 'snow', intensities: Array.from(snow) });
-  if (fog.some(v => v > 0)) results.push({ type: 'fog', intensities: Array.from(fog) });
+  const results: WeatherOverlay[] = [];
+  if (cloud.some((v) => v > 0)) results.push({ type: 'cloud', intensities: Array.from(cloud) });
+  if (rain.some((v) => v > 0)) results.push({ type: 'rain', intensities: Array.from(rain) });
+  if (snow.some((v) => v > 0)) results.push({ type: 'snow', intensities: Array.from(snow) });
+  if (fog.some((v) => v > 0)) results.push({ type: 'fog', intensities: Array.from(fog) });
   return results;
 }

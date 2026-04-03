@@ -9,7 +9,7 @@ import chroma from 'chroma-js';
 // Original hue stops — normalized at runtime to equal LAB lightness
 // so weather overlays have consistent contrast across all temperatures.
 const TARGET_L = 62;
-const rawStops = [
+const rawStops: string[] = [
   '#1e3a5f', // cold blue (14°F)
   '#3b82c4', // blue (32°F)
   '#5bb8d4', // cool cyan (46°F)
@@ -21,7 +21,7 @@ const rawStops = [
 ];
 const normalizedStops = rawStops.map((hex) => {
   const [, a, b] = chroma(hex).lab();
-  return chroma.lab(TARGET_L, a, b);
+  return chroma.lab(TARGET_L, a, b).hex();
 });
 
 const tempScale = chroma
@@ -32,11 +32,11 @@ const tempScale = chroma
 
 /**
  * Returns a CSS color string for a given temperature + time of day.
- * @param {number} temp - Temperature in °F
- * @param {string} _condition - Unused, kept for call-site compatibility
- * @param {boolean} isNight - Whether this hour is before sunrise or after sunset
+ * @param temp - Temperature in °F
+ * @param _condition - Unused, kept for call-site compatibility
+ * @param isNight - Whether this hour is before sunrise or after sunset
  */
-export function weatherToColor(temp, _condition, isNight) {
+export function weatherToColor(temp: number, _condition: string | null, isNight: boolean): string {
   let color = tempScale(temp);
 
   if (isNight) {
@@ -49,6 +49,6 @@ export function weatherToColor(temp, _condition, isNight) {
 /**
  * Blend two colors in LAB space.
  */
-export function blendColors(color1, color2, t) {
+export function blendColors(color1: string, color2: string, t: number): string {
   return chroma.mix(color1, color2, t, 'lab').css();
 }

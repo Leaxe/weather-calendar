@@ -1,4 +1,6 @@
-export const mockEvents = [
+import type { CalendarEvent } from '../types';
+
+export const mockEvents: CalendarEvent[] = [
   {
     id: 1,
     title: 'Team Standup',

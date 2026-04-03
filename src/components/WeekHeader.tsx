@@ -1,4 +1,10 @@
-export default function WeekHeader({ weekData }) {
+import type { DayData } from '../types';
+
+interface WeekHeaderProps {
+  weekData: DayData[];
+}
+
+export default function WeekHeader({ weekData }: WeekHeaderProps) {
   return (
     <div className="week-header">
       <div className="week-header__gutter" />
@@ -13,7 +19,7 @@ export default function WeekHeader({ weekData }) {
             <span className="week-header__day-name">{day.dayName}</span>
             <span className="week-header__date">{dateNum}</span>
             <span className="week-header__temp-range">
-              {high}° / {low}°
+              {high}\u00B0 / {low}\u00B0
             </span>
           </div>
         );

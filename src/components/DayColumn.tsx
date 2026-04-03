@@ -6,40 +6,54 @@ import SunMarker from './SunMarker';
 import EventCard from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
+import type { DayData, CalendarEvent, HourlyData } from '../types';
 
-export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
-  const [tooltip, setTooltip] = useState(null);
-  const colRef = useRef(null);
+interface TooltipState {
+  hourData: HourlyData;
+  hour: number;
+  position: { x: number; y: number };
+}
+
+interface DayColumnProps {
+  dayData: DayData;
+  events: CalendarEvent[];
+  showDetails: boolean;
+  dayIndex: number;
+}
+
+export default function DayColumn({ dayData, events, showDetails, dayIndex }: DayColumnProps) {
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const colRef = useRef<HTMLDivElement>(null);
 
   const gradient = useMemo(
     () => buildDayGradient(dayData.hourly, dayData.sunrise, dayData.sunset),
     [dayData],
   );
 
-  const weatherOverlays = useMemo(
-    () => buildWeatherOverlays(dayData.hourly),
+  const weatherOverlays = useMemo(() => buildWeatherOverlays(dayData.hourly), [dayData]);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = colRef.current!.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top;
+      const scrollParent = colRef.current!.closest('.week-grid');
+      const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
+      const hour = pixelToHour(relativeY + scrollTop);
+      const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
+      const hourData = dayData.hourly[hourIndex];
+
+      const colWidth = rect.width;
+      let x = e.clientX - rect.left + 14;
+      if (x + 160 > colWidth) x = e.clientX - rect.left - 160;
+
+      setTooltip({
+        hourData,
+        hour,
+        position: { x, y: relativeY + 14 },
+      });
+    },
     [dayData],
   );
-
-  const handleMouseMove = useCallback((e) => {
-    const rect = colRef.current.getBoundingClientRect();
-    const relativeY = e.clientY - rect.top;
-    const scrollParent = colRef.current.closest('.week-grid');
-    const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
-    const hour = pixelToHour(relativeY + scrollTop);
-    const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
-    const hourData = dayData.hourly[hourIndex];
-
-    const colWidth = rect.width;
-    let x = e.clientX - rect.left + 14;
-    if (x + 160 > colWidth) x = e.clientX - rect.left - 160;
-
-    setTooltip({
-      hourData,
-      hour,
-      position: { x, y: relativeY + 14 },
-    });
-  }, [dayData]);
 
   const handleMouseLeave = useCallback(() => {
     setTooltip(null);
@@ -61,11 +75,7 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
       >
         {/* Hour gridlines */}
         {Array.from({ length: 24 }, (_, i) => (
-          <div
-            key={i}
-            className="day-column__gridline"
-            style={{ top: i * HOUR_HEIGHT }}
-          />
+          <div key={i} className="day-column__gridline" style={{ top: i * HOUR_HEIGHT }} />
         ))}
 
         {/* Weather condition overlays — one full-day texture per type */}
@@ -101,19 +111,21 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
         {/* Details overlay */}
         {showDetails && (
           <div className="day-column__details-overlay">
-            {dayData.hourly.filter((_, i) => i % 3 === 0).map((h) => {
-              const isNight = h.hour < dayData.sunrise || h.hour > dayData.sunset;
-              return (
-                <div
-                  key={h.hour}
-                  className="day-column__detail-chip"
-                  style={{ top: h.hour * HOUR_HEIGHT + HOUR_HEIGHT / 2 - 10 }}
-                >
-                  {conditionIcon(h, isNight)} {Math.round(h.temp)}°
-                  {h.precipProb > 20 ? ` ${h.precipProb}%` : ''}
-                </div>
-              );
-            })}
+            {dayData.hourly
+              .filter((_, i) => i % 3 === 0)
+              .map((h) => {
+                const isNight = h.hour < dayData.sunrise || h.hour > dayData.sunset;
+                return (
+                  <div
+                    key={h.hour}
+                    className="day-column__detail-chip"
+                    style={{ top: h.hour * HOUR_HEIGHT + HOUR_HEIGHT / 2 - 10 }}
+                  >
+                    {conditionIcon(h, isNight)} {Math.round(h.temp)}\u00B0
+                    {h.precipProb > 20 ? ` ${h.precipProb}%` : ''}
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
