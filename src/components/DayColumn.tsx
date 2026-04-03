@@ -121,7 +121,7 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }: Da
                     className="day-column__detail-chip"
                     style={{ top: h.hour * HOUR_HEIGHT + HOUR_HEIGHT / 2 - 10 }}
                   >
-                    {conditionIcon(h, isNight)} {Math.round(h.temp)}\u00B0
+                    {conditionIcon(h, isNight)} {Math.round(h.temp)}°
                     {h.precipProb > 20 ? ` ${h.precipProb}%` : ''}
                   </div>
                 );

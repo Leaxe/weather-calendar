@@ -19,7 +19,7 @@ export default function WeekHeader({ weekData }: WeekHeaderProps) {
             <span className="week-header__day-name">{day.dayName}</span>
             <span className="week-header__date">{dateNum}</span>
             <span className="week-header__temp-range">
-              {high}\u00B0 / {low}\u00B0
+              {high}° / {low}°
             </span>
           </div>
         );

@@ -34,7 +34,7 @@ export default function WeatherTooltip({
         {conditionIcon(hourData, isNight)} {formatHour(hour)}
       </div>
       <div className="mb-0.5 text-xl font-light text-foreground">
-        {Math.round(hourData.temp)}\u00B0F
+        {Math.round(hourData.temp)}°F
       </div>
       <div className="mb-1.5 text-xs text-muted-foreground">
         {conditionLabel(hourData, isNight)}
