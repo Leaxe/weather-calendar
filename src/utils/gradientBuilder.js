@@ -64,20 +64,54 @@ export function buildDayGradient(hourlyData, sunrise, sunset) {
 }
 
 /**
- * Builds per-hour precipitation overlays from hourly data.
- * Each entry has its own opacity derived from precipitation %.
+ * Maps every non-clear condition to an overlay type.
+ * Returns null for 'clear' (no overlay needed).
+ */
+function conditionToOverlay(condition) {
+  switch (condition) {
+    case 'partly_cloudy': return 'partly_cloudy';
+    case 'cloudy':        return 'cloudy';
+    case 'overcast':      return 'overcast';
+    case 'fog':           return 'fog';
+    case 'snow':          return 'snow';
+    case 'rain':
+    case 'heavy_rain':
+    case 'thunderstorm':  return 'rain';
+    default:              return null;
+  }
+}
+
+/**
+ * Overlay opacity per type. Cloud/fog types get a fixed opacity
+ * (they desaturate the gradient). Precipitation scales with precip %.
+ */
+const fixedOpacity = {
+  partly_cloudy: 0.25,
+  cloudy: 0.45,
+  overcast: 0.6,
+  fog: 0.55,
+};
+
+/**
+ * Builds per-hour weather condition overlays.
+ * Every non-clear hour gets an overlay with a type and opacity.
  * Returns an array of { hour, type, opacity }.
  */
-export function buildPrecipitationOverlays(hourlyData) {
+export function buildWeatherOverlays(hourlyData) {
   const overlays = [];
 
   for (const { hour, condition, precipitation } of hourlyData) {
-    const isPrecip = ['rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(condition);
-    if (!isPrecip) continue;
+    const type = conditionToOverlay(condition);
+    if (!type) continue;
 
-    const type = condition === 'snow' ? 'snow' : 'rain';
-    // Map precipitation 0–100% → opacity 0.15–1.0
-    const opacity = 0.15 + (Math.min(precipitation, 100) / 100) * 0.85;
+    let opacity;
+    if (type === 'rain' || type === 'snow') {
+      // Precipitation opacity scales with chance
+      opacity = 0.2 + (Math.min(precipitation, 100) / 100) * 0.8;
+    } else {
+      opacity = fixedOpacity[type] || 0.3;
+    }
+
     overlays.push({ hour, type, opacity });
   }
 

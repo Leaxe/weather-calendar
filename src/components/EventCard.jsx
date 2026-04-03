@@ -11,7 +11,6 @@ export default function EventCard({ event }) {
       style={{
         top,
         height: Math.max(height, 20),
-        '--event-color': event.color,
       }}
     >
       <div className={`event-card__content ${isShort ? 'event-card__content--compact' : ''}`}>

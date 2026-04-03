@@ -178,8 +178,8 @@ html, body, #root {
   pointer-events: none;
 }
 
-/* ===== Precipitation Overlays ===== */
-.precip-overlay {
+/* ===== Weather Condition Overlays ===== */
+.wx-overlay {
   position: absolute;
   left: 0;
   right: 0;
@@ -187,14 +187,16 @@ html, body, #root {
   pointer-events: none;
 }
 
-/* Rain: short broken lines falling at a steep angle, like raindrops */
-.precip-overlay--rain {
-  background-image: url("data:image/svg+xml,%3Csvg width='28' height='40' viewBox='0 0 28 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='6' y1='0' x2='4' y2='8' stroke='%23aaccff' stroke-width='1.5' stroke-linecap='round' opacity='0.5'/%3E%3Cline x1='20' y1='14' x2='18' y2='22' stroke='%23aaccff' stroke-width='1.5' stroke-linecap='round' opacity='0.4'/%3E%3Cline x1='12' y1='28' x2='10' y2='36' stroke='%23aaccff' stroke-width='1.5' stroke-linecap='round' opacity='0.45'/%3E%3C/svg%3E");
+/* Cloud/fog overlays use canvas-generated noise textures (set inline) */
+
+/* Rain: short broken lines falling at a steep angle */
+.wx-overlay--rain {
+  background-image: url("data:image/svg+xml,%3Csvg width='28' height='40' viewBox='0 0 28 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='6' y1='0' x2='4' y2='8' stroke='%237799cc' stroke-width='1.5' stroke-linecap='round' opacity='0.7'/%3E%3Cline x1='20' y1='14' x2='18' y2='22' stroke='%237799cc' stroke-width='1.5' stroke-linecap='round' opacity='0.6'/%3E%3Cline x1='12' y1='28' x2='10' y2='36' stroke='%237799cc' stroke-width='1.5' stroke-linecap='round' opacity='0.65'/%3E%3C/svg%3E");
   background-size: 28px 40px;
 }
 
-/* Snow: small scattered dots, like falling snowflakes */
-.precip-overlay--snow {
+/* Snow: scattered soft dots */
+.wx-overlay--snow {
   background-image: url("data:image/svg+xml,%3Csvg width='36' height='36' viewBox='0 0 36 36' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='6' cy='6' r='1.5' fill='white' opacity='0.45'/%3E%3Ccircle cx='24' cy='16' r='1' fill='white' opacity='0.35'/%3E%3Ccircle cx='14' cy='30' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='30' cy='8' r='1' fill='white' opacity='0.3'/%3E%3Ccircle cx='18' cy='20' r='1.3' fill='white' opacity='0.35'/%3E%3C/svg%3E");
   background-size: 36px 36px;
 }
@@ -240,7 +242,7 @@ html, body, #root {
   right: 4px;
   z-index: 4;
   border-radius: 6px;
-  background: var(--event-color, #4285f4);
+  background: hsl(var(--accent));
   opacity: 0.92;
   overflow: hidden;
   cursor: pointer;
@@ -270,9 +272,8 @@ html, body, #root {
 .event-card__title {
   font-size: 12px;
   font-weight: 600;
-  color: white;
+  color: hsl(var(--accent-foreground));
   line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 

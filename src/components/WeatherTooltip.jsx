@@ -14,14 +14,14 @@ export default function WeatherTooltip({ hourData, hour, sunrise, sunset, positi
         {conditionIcon(hourData.condition, isNight)} {formatHour(hour)}
       </div>
       <div className="mb-0.5 text-xl font-light text-foreground">
-        {Math.round(hourData.temp)}°C
+        {Math.round(hourData.temp)}°F
       </div>
       <div className="mb-1.5 text-xs text-muted-foreground">
         {conditionLabel(hourData.condition)}
       </div>
       <div className="flex gap-3 text-[11px] text-muted-foreground">
         <span>💧 {hourData.precipitation}%</span>
-        <span>💨 {hourData.windSpeed} km/h</span>
+        <span>💨 {hourData.windSpeed} mph</span>
       </div>
     </div>
   );

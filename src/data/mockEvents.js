@@ -5,7 +5,6 @@ export const mockEvents = [
     day: 0, // Monday
     startHour: 9,
     endHour: 9.5,
-    color: '#4285f4',
   },
   {
     id: 2,
@@ -13,7 +12,6 @@ export const mockEvents = [
     day: 0,
     startHour: 12,
     endHour: 13,
-    color: '#0b8043',
   },
   {
     id: 3,
@@ -21,7 +19,6 @@ export const mockEvents = [
     day: 1,
     startHour: 9,
     endHour: 9.5,
-    color: '#4285f4',
   },
   {
     id: 4,
@@ -29,7 +26,6 @@ export const mockEvents = [
     day: 1,
     startHour: 14,
     endHour: 15,
-    color: '#8e24aa',
   },
   {
     id: 5,
@@ -37,7 +33,6 @@ export const mockEvents = [
     day: 2,
     startHour: 9,
     endHour: 9.5,
-    color: '#4285f4',
   },
   {
     id: 6,
@@ -45,7 +40,6 @@ export const mockEvents = [
     day: 2,
     startHour: 13,
     endHour: 14.5,
-    color: '#d50000',
   },
   {
     id: 7,
@@ -53,7 +47,6 @@ export const mockEvents = [
     day: 3,
     startHour: 9,
     endHour: 9.5,
-    color: '#4285f4',
   },
   {
     id: 8,
@@ -61,7 +54,6 @@ export const mockEvents = [
     day: 3,
     startHour: 11,
     endHour: 15,
-    color: '#f4511e',
   },
   {
     id: 9,
@@ -69,7 +61,6 @@ export const mockEvents = [
     day: 4,
     startHour: 9,
     endHour: 9.5,
-    color: '#4285f4',
   },
   {
     id: 10,
@@ -77,7 +68,6 @@ export const mockEvents = [
     day: 4,
     startHour: 17,
     endHour: 19,
-    color: '#0b8043',
   },
   {
     id: 11,
@@ -85,7 +75,6 @@ export const mockEvents = [
     day: 5,
     startHour: 7,
     endHour: 10,
-    color: '#0b8043',
   },
   {
     id: 12,
@@ -93,7 +82,6 @@ export const mockEvents = [
     day: 5,
     startHour: 15,
     endHour: 18,
-    color: '#f4511e',
   },
   {
     id: 13,
@@ -101,7 +89,6 @@ export const mockEvents = [
     day: 6,
     startHour: 8,
     endHour: 10,
-    color: '#0b8043',
   },
   {
     id: 14,
@@ -109,6 +96,5 @@ export const mockEvents = [
     day: 6,
     startHour: 19,
     endHour: 21.5,
-    color: '#8e24aa',
   },
 ];

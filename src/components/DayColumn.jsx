@@ -1,10 +1,13 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { buildDayGradient, buildPrecipitationOverlays } from '../utils/gradientBuilder';
+import { buildDayGradient, buildWeatherOverlays } from '../utils/gradientBuilder';
 import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour, conditionIcon } from '../utils/timeUtils';
+import { getNoiseTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
 import EventCard from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
+
+const NOISE_TYPES = new Set(['partly_cloudy', 'cloudy', 'overcast', 'fog']);
 
 export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
   const [tooltip, setTooltip] = useState(null);
@@ -15,8 +18,8 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
     [dayData],
   );
 
-  const precipOverlays = useMemo(
-    () => buildPrecipitationOverlays(dayData.hourly),
+  const weatherOverlays = useMemo(
+    () => buildWeatherOverlays(dayData.hourly),
     [dayData],
   );
 
@@ -67,18 +70,28 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }) {
           />
         ))}
 
-        {/* Precipitation pattern overlays — opacity scales with precip % */}
-        {precipOverlays.map((o) => (
-          <div
-            key={`precip-${o.hour}`}
-            className={`precip-overlay precip-overlay--${o.type}`}
-            style={{
-              top: o.hour * HOUR_HEIGHT,
-              height: HOUR_HEIGHT,
-              opacity: o.opacity,
-            }}
-          />
-        ))}
+        {/* Weather condition overlays */}
+        {weatherOverlays.map((o) => {
+          const useNoise = NOISE_TYPES.has(o.type);
+          const style = {
+            top: o.hour * HOUR_HEIGHT,
+            height: HOUR_HEIGHT,
+            opacity: o.opacity,
+          };
+          if (useNoise) {
+            // Each hour gets a unique seed so adjacent hours look different
+            const tex = getNoiseTexture(o.type, dayIndex * 100 + o.hour);
+            style.backgroundImage = `url(${tex})`;
+            style.backgroundSize = 'cover';
+          }
+          return (
+            <div
+              key={`wx-${o.hour}`}
+              className={`wx-overlay ${useNoise ? '' : `wx-overlay--${o.type}`}`}
+              style={style}
+            />
+          );
+        })}
 
         {/* Sunrise / Sunset markers */}
         <SunMarker hour={dayData.sunrise} type="sunrise" />
