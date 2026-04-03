@@ -6,17 +6,26 @@ import chroma from 'chroma-js';
  * Color is driven purely by temperature. All weather conditions
  * (clouds, rain, snow, fog) are rendered as pattern overlays instead.
  */
+// Original hue stops — normalized at runtime to equal LAB lightness
+// so weather overlays have consistent contrast across all temperatures.
+const TARGET_L = 62;
+const rawStops = [
+  '#1e3a5f', // cold blue (14°F)
+  '#3b82c4', // blue (32°F)
+  '#5bb8d4', // cool cyan (46°F)
+  '#6dbe88', // mild green (61°F)
+  '#c4cc44', // warm yellow-green (72°F)
+  '#e8a735', // warm orange (82°F)
+  '#d45d2c', // hot red-orange (93°F)
+  '#b02a1a', // extreme heat (104°F)
+];
+const normalizedStops = rawStops.map((hex) => {
+  const [, a, b] = chroma(hex).lab();
+  return chroma.lab(TARGET_L, a, b);
+});
+
 const tempScale = chroma
-  .bezier([
-    '#1e3a5f', // deep cold blue (14°F)
-    '#3b82c4', // cold blue (32°F)
-    '#5bb8d4', // cool cyan (46°F)
-    '#6dbe88', // mild green (61°F)
-    '#c4cc44', // warm yellow-green (72°F)
-    '#e8a735', // warm orange (82°F)
-    '#d45d2c', // hot red-orange (93°F)
-    '#b02a1a', // extreme heat (104°F)
-  ])
+  .bezier(normalizedStops)
   .scale()
   .domain([14, 32, 46, 61, 72, 82, 93, 104])
   .mode('lab');
