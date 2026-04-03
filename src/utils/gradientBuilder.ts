@@ -73,6 +73,22 @@ export function buildDayGradient(
   return `linear-gradient(to bottom, ${gradientStops})`;
 }
 
+// --- Overlay intensity thresholds & scaling ---
+// Cloud: minimum cloud cover % to show overlay, and divisor for intensity
+const CLOUD_MIN_PCT = 10;
+const CLOUD_SCALE = 100; // cloudCover / CLOUD_SCALE = intensity
+
+// Rain: precip probability threshold when no actual precipitation, and max mm for full intensity
+const RAIN_PROB_THRESHOLD = 40;
+const RAIN_MAX_MM = 5; // precipitation mm that maps to intensity 1.0
+const RAIN_MIN_INTENSITY = 0.05;
+
+// Snow: max cm for full intensity
+const SNOW_MAX_CM = 2; // snowfall cm that maps to intensity 1.0
+
+// Fog: visibility threshold in meters (below this, fog overlay appears)
+const FOG_VISIBILITY_THRESHOLD = 5000;
+
 /**
  * Builds full-day intensity curves per overlay type.
  * Returns an array of { type, intensities: number[24] } — one entry per
@@ -90,20 +106,20 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
 
     // Snow and rain suppress clouds
     if (h.snowfall > 0) {
-      snow[i] = Math.min(1, h.snowfall / 2);
-    } else if (h.precipitation > 0 || h.precipProb > 40) {
+      snow[i] = Math.min(1, h.snowfall / SNOW_MAX_CM);
+    } else if (h.precipitation > 0 || h.precipProb > RAIN_PROB_THRESHOLD) {
       rain[i] =
         h.precipitation > 0
-          ? Math.min(1, h.precipitation / 5)
-          : Math.min(1, ((h.precipProb - 40) / 60) * 0.3);
-      rain[i] = Math.max(0.05, rain[i]);
-    } else if (h.cloudCover > 10) {
-      cloud[i] = h.cloudCover / 100;
+          ? Math.min(1, h.precipitation / RAIN_MAX_MM)
+          : Math.min(1, ((h.precipProb - RAIN_PROB_THRESHOLD) / (100 - RAIN_PROB_THRESHOLD)) * 0.3);
+      rain[i] = Math.max(RAIN_MIN_INTENSITY, rain[i]);
+    } else if (h.cloudCover > CLOUD_MIN_PCT) {
+      cloud[i] = h.cloudCover / CLOUD_SCALE;
     }
 
     // Fog layers with anything
-    if (h.visibility < 5000) {
-      fog[i] = 1 - h.visibility / 5000;
+    if (h.visibility < FOG_VISIBILITY_THRESHOLD) {
+      fog[i] = 1 - h.visibility / FOG_VISIBILITY_THRESHOLD;
     }
   }
 
