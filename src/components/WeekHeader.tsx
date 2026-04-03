@@ -2,9 +2,12 @@ import type { DayData } from '../types';
 
 interface WeekHeaderProps {
   weekData: DayData[];
+  weekStartDate?: string;
 }
 
 export default function WeekHeader({ weekData }: WeekHeaderProps) {
+  const today = new Date().toISOString().slice(0, 10);
+
   return (
     <div className="week-header">
       <div className="week-header__gutter" />
@@ -13,11 +16,18 @@ export default function WeekHeader({ weekData }: WeekHeaderProps) {
         const high = Math.round(Math.max(...temps));
         const low = Math.round(Math.min(...temps));
         const dateNum = new Date(day.date + 'T12:00:00').getDate();
+        const isToday = day.date === today;
 
         return (
           <div key={i} className="week-header__day">
             <span className="week-header__day-name">{day.dayName}</span>
-            <span className="week-header__date">{dateNum}</span>
+            <span
+              className={
+                isToday ? 'week-header__date week-header__date--today' : 'week-header__date'
+              }
+            >
+              {dateNum}
+            </span>
             <span className="week-header__temp-range">
               {high}° / {low}°
             </span>

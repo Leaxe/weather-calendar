@@ -8,6 +8,7 @@ interface WeekGridProps {
   weekData: DayData[];
   events: CalendarEvent[];
   showDetails: boolean;
+  weekStartDate: string;
 }
 
 export default function WeekGrid({ weekData, events, showDetails }: WeekGridProps) {
@@ -27,13 +28,7 @@ export default function WeekGrid({ weekData, events, showDetails }: WeekGridProp
         {weekData.map((day, i) => {
           const dayEvents = events.filter((e) => e.day === i);
           return (
-            <DayColumn
-              key={i}
-              dayIndex={i}
-              dayData={day}
-              events={dayEvents}
-              showDetails={showDetails}
-            />
+            <DayColumn key={day.date} dayData={day} events={dayEvents} showDetails={showDetails} />
           );
         })}
       </div>

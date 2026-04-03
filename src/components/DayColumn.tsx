@@ -18,10 +18,9 @@ interface DayColumnProps {
   dayData: DayData;
   events: CalendarEvent[];
   showDetails: boolean;
-  dayIndex: number;
 }
 
-export default function DayColumn({ dayData, events, showDetails, dayIndex }: DayColumnProps) {
+export default function DayColumn({ dayData, events, showDetails }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +58,15 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }: Da
     setTooltip(null);
   }, []);
 
+  // Derive a stable seed from the date string
+  const daySeed = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < dayData.date.length; i++) {
+      hash = (hash * 31 + dayData.date.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash);
+  }, [dayData.date]);
+
   return (
     <div
       className="day-column"
@@ -80,7 +88,7 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }: Da
 
         {/* Weather condition overlays — one full-day texture per type */}
         {weatherOverlays.map(({ type, intensities }) => {
-          const seed = dayIndex * 100 + type.charCodeAt(0);
+          const seed = daySeed * 100 + type.charCodeAt(0);
           const tex = getDayTexture(type, intensities, seed);
           return (
             <div
@@ -101,7 +109,7 @@ export default function DayColumn({ dayData, events, showDetails, dayIndex }: Da
         <SunMarker hour={dayData.sunset} type="sunset" />
 
         {/* Now indicator */}
-        <NowIndicator dayIndex={dayIndex} />
+        <NowIndicator dayDate={dayData.date} />
 
         {/* Events */}
         {events.map((event) => (

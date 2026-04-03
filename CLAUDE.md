@@ -36,7 +36,8 @@ The calendar is a vertical scrollable grid (like Google Calendar week view). Eac
 - **Continuous weather model**: Weather data uses numeric channels (cloudCover 0-100, precipitation mm, snowfall cm, visibility m) instead of discrete condition strings. This allows smooth visual transitions between hours.
 - **Overlay priority**: Snow > Rain > Clouds (mutually exclusive), Fog can layer with anything.
 - **Equal luminance**: Temperature hues are normalized to LAB L=62 so overlays look equally visible regardless of the underlying temperature color.
-- **Live weather via Open-Meteo**: Free API, no key required. User selects a city via geocoding search; forecast is fetched and mapped to the same `DayData`/`HourlyData` types. Mock data is the fallback when no location is selected or on API error.
+- **Live weather via Open-Meteo**: Free API, no key required. User selects a city via geocoding search; forecast is fetched and mapped to `DayData`/`HourlyData` types. Uses forecast API for future dates (+16 days) and archive API for past dates, with automatic splitting for mixed ranges.
+- **Date navigation**: Week view can be shifted forward/backward with arrow buttons. "Today" button jumps to current week. Live now indicator updates every 60 seconds. Today's date is highlighted in the header (Google Calendar style blue circle).
 
 ## Project Structure
 
@@ -49,7 +50,7 @@ src/
 ├── main.tsx              # Entry point
 ├── services/             # API layer (Open-Meteo weather + geocoding)
 ├── hooks/                # React hooks (useWeather, usePersistedLocation)
-├── data/                 # Mock data fixtures (fallback)
+├── data/                 # Static data (mock events)
 ├── utils/                # Core logic (color science, gradients, canvas textures, time math)
 ├── components/           # UI components (calendar grid, day columns, events, tooltips, location picker)
 │   └── ui/               # shadcn/ui primitives (button, toggle, tooltip)

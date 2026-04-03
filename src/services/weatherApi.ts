@@ -2,6 +2,13 @@ import type { GeoLocation, DayData, HourlyData } from '../types';
 
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+const ARCHIVE_URL = 'https://archive-api.open-meteo.com/v1/archive';
+
+export function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export async function searchCities(query: string, signal?: AbortSignal): Promise<GeoLocation[]> {
   if (!query.trim()) return [];
@@ -30,36 +37,81 @@ export async function searchCities(query: string, signal?: AbortSignal): Promise
   );
 }
 
-export async function fetchWeekForecast(
+const HOURLY_PARAMS = [
+  'temperature_2m',
+  'cloud_cover',
+  'precipitation_probability',
+  'precipitation',
+  'snowfall',
+  'visibility',
+  'wind_speed_10m',
+  'relative_humidity_2m',
+].join(',');
+
+function buildParams(
   lat: number,
   lon: number,
-  signal?: AbortSignal,
-): Promise<DayData[]> {
-  const params = new URLSearchParams({
+  startDate: string,
+  endDate: string,
+): URLSearchParams {
+  return new URLSearchParams({
     latitude: String(lat),
     longitude: String(lon),
-    hourly: [
-      'temperature_2m',
-      'cloud_cover',
-      'precipitation_probability',
-      'precipitation',
-      'snowfall',
-      'visibility',
-      'wind_speed_10m',
-      'relative_humidity_2m',
-    ].join(','),
+    hourly: HOURLY_PARAMS,
     daily: 'sunrise,sunset',
     temperature_unit: 'fahrenheit',
     wind_speed_unit: 'mph',
     timezone: 'auto',
-    forecast_days: '7',
+    start_date: startDate,
+    end_date: endDate,
   });
+}
 
-  const res = await fetch(`${FORECAST_URL}?${params}`, { signal });
-  if (!res.ok) throw new Error(`Weather API error: ${res.status}`);
+export async function fetchWeekForecast(
+  lat: number,
+  lon: number,
+  startDate: string,
+  signal?: AbortSignal,
+): Promise<DayData[]> {
+  const endDate = addDays(startDate, 6);
+  const today = new Date().toISOString().slice(0, 10);
 
-  const data = await res.json();
-  return mapApiResponse(data);
+  // All dates in the future or today: use forecast API
+  if (startDate >= today) {
+    const params = buildParams(lat, lon, startDate, endDate);
+    const res = await fetch(`${FORECAST_URL}?${params}`, { signal });
+    if (!res.ok) throw new Error(`Weather API error: ${res.status}`);
+    const data = await res.json();
+    return mapApiResponse(data);
+  }
+
+  // All dates in the past: use archive API
+  if (endDate < today) {
+    const params = buildParams(lat, lon, startDate, endDate);
+    const res = await fetch(`${ARCHIVE_URL}?${params}`, { signal });
+    if (!res.ok) throw new Error(`Weather API error: ${res.status}`);
+    const data = await res.json();
+    return mapApiResponse(data);
+  }
+
+  // Mixed: past portion via archive, future portion via forecast
+  const yesterday = addDays(today, -1);
+  const archiveParams = buildParams(lat, lon, startDate, yesterday);
+  const forecastParams = buildParams(lat, lon, today, endDate);
+
+  const [archiveRes, forecastRes] = await Promise.all([
+    fetch(`${ARCHIVE_URL}?${archiveParams}`, { signal }),
+    fetch(`${FORECAST_URL}?${forecastParams}`, { signal }),
+  ]);
+
+  if (!archiveRes.ok) throw new Error(`Archive API error: ${archiveRes.status}`);
+  if (!forecastRes.ok) throw new Error(`Forecast API error: ${forecastRes.status}`);
+
+  const [archiveData, forecastData] = await Promise.all([archiveRes.json(), forecastRes.json()]);
+
+  const archiveDays = mapApiResponse(archiveData);
+  const forecastDays = mapApiResponse(forecastData);
+  return [...archiveDays, ...forecastDays];
 }
 
 interface ApiResponse {
@@ -72,7 +124,7 @@ interface ApiResponse {
     time: string[];
     temperature_2m: number[];
     cloud_cover: number[];
-    precipitation_probability: number[];
+    precipitation_probability: (number | null)[];
     precipitation: number[];
     snowfall: number[];
     visibility: number[];

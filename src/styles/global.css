@@ -108,6 +108,17 @@ html, body, #root {
   line-height: 1.1;
 }
 
+.week-header__date--today {
+  background: #4285f4;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .week-header__temp-range {
   font-size: 11px;
   color: var(--text-secondary);
