@@ -3,7 +3,7 @@ export interface HourlyData {
   temp: number;
   cloudCover: number;
   precipitation: number;
-  snowfall: number;
+  weatherCode: number;
   visibility: number;
   windSpeed: number;
 }
@@ -32,7 +32,7 @@ export interface GeoLocation {
   admin1?: string;
 }
 
-export type OverlayType = 'cloud' | 'rain' | 'snow' | 'fog';
+export type OverlayType = 'cloud' | 'rain' | 'snow' | 'freezing_rain' | 'fog';
 
 export interface WeatherOverlay {
   type: OverlayType;

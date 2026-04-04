@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
-import { formatHour, conditionLabel, conditionIcon } from '../utils/timeUtils';
+import { formatHour } from '../utils/timeUtils';
+import { wmoConditionLabel, wmoConditionIcon } from '../utils/weatherConditions';
 import type { HourlyData } from '../types';
 
 interface TooltipPosition {
@@ -32,11 +33,11 @@ export default function WeatherTooltip({
       style={{ top: position.y, left: position.x }}
     >
       <div className="mb-1 text-xs text-muted-foreground">
-        {conditionIcon(hourData, isNight)} {formatHour(hour)}
+        {wmoConditionIcon(hourData.weatherCode, isNight)} {formatHour(hour)}
       </div>
       <div className="mb-0.5 text-xl font-light text-foreground">{Math.round(hourData.temp)}°F</div>
       <div className="mb-1.5 text-xs text-muted-foreground">
-        {conditionLabel(hourData, isNight)}
+        {wmoConditionLabel(hourData.weatherCode)}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
         <span>
@@ -45,11 +46,6 @@ export default function WeatherTooltip({
         {hourData.precipitation > 0 && (
           <span>
             {'\u{1F327}\uFE0F'} {hourData.precipitation}mm
-          </span>
-        )}
-        {hourData.snowfall > 0 && (
-          <span>
-            {'\u2744\uFE0F'} {hourData.snowfall}cm
           </span>
         )}
         <span>

@@ -1,6 +1,6 @@
 import chroma from 'chroma-js';
 import { weatherToColor } from './colorScale';
-import type { HourlyData, WeatherOverlay } from '../types';
+import type { HourlyData, OverlayType, WeatherOverlay } from '../types';
 
 interface GradientStop {
   hour?: number;
@@ -78,35 +78,61 @@ export function buildDayGradient(
 const CLOUD_MIN_PCT = 10;
 const CLOUD_SCALE = 100; // cloudCover / CLOUD_SCALE = intensity
 
-// Rain: max mm for full intensity
-const RAIN_MAX_MM = 5; // precipitation mm that maps to intensity 1.0
-
-// Snow: max cm for full intensity
-const SNOW_MAX_CM = 2; // snowfall cm that maps to intensity 1.0
+// Precipitation: max mm for full intensity (applies to rain, snow, freezing rain)
+const PRECIP_MAX_MM = 5;
 
 // Fog: visibility threshold in meters (below this, fog overlay appears)
 const FOG_VISIBILITY_THRESHOLD = 5000;
 
 /**
+ * Map WMO weather code to a precipitation overlay type.
+ * Returns null for non-precipitation codes (clear, clouds, fog).
+ *
+ * WMO codes:
+ *   51-55: Drizzle → rain
+ *   56-57: Freezing drizzle → freezing_rain
+ *   61-65: Rain → rain
+ *   66-67: Freezing rain → freezing_rain
+ *   71-77: Snow → snow
+ *   80-82: Rain showers → rain
+ *   85-86: Snow showers → snow
+ *   95-99: Thunderstorm → rain
+ */
+function weatherCodeToOverlay(code: number): OverlayType | null {
+  if (code >= 51 && code <= 55) return 'rain';
+  if (code >= 56 && code <= 57) return 'freezing_rain';
+  if (code >= 61 && code <= 65) return 'rain';
+  if (code >= 66 && code <= 67) return 'freezing_rain';
+  if (code >= 71 && code <= 77) return 'snow';
+  if (code >= 80 && code <= 82) return 'rain';
+  if (code >= 85 && code <= 86) return 'snow';
+  if (code >= 95 && code <= 99) return 'rain';
+  return null;
+}
+
+/**
  * Builds full-day intensity curves per overlay type.
- * Returns an array of { type, intensities: number[24] } — one entry per
- * active overlay type, with a 24-element array of 0–1 intensities.
- * Only includes types that have at least one non-zero hour.
+ * Uses WMO weather_code to determine precipitation type (rain/snow/freezing rain),
+ * precipitation mm for intensity, cloud cover for cloud overlay, visibility for fog.
+ * Returns an array of { type, intensities: number[24] }.
  */
 export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[] {
   const cloud = new Float32Array(24);
   const rain = new Float32Array(24);
   const snow = new Float32Array(24);
+  const freezingRain = new Float32Array(24);
   const fog = new Float32Array(24);
 
   for (const h of hourlyData) {
     const i = h.hour;
+    const precipType = weatherCodeToOverlay(h.weatherCode);
 
-    // Snow and rain suppress clouds
-    if (h.snowfall > 0) {
-      snow[i] = Math.min(1, h.snowfall / SNOW_MAX_CM);
-    } else if (h.precipitation > 0) {
-      rain[i] = Math.min(1, h.precipitation / RAIN_MAX_MM);
+    // Precipitation overlays suppress clouds
+    if (precipType && h.precipitation > 0) {
+      const intensity = Math.min(1, h.precipitation / PRECIP_MAX_MM);
+      if (precipType === 'snow') snow[i] = intensity;
+      else if (precipType === 'freezing_rain') freezingRain[i] = intensity;
+      else rain[i] = intensity;
     } else if (h.cloudCover > CLOUD_MIN_PCT) {
       cloud[i] = h.cloudCover / CLOUD_SCALE;
     }
@@ -121,6 +147,8 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
   if (cloud.some((v) => v > 0)) results.push({ type: 'cloud', intensities: Array.from(cloud) });
   if (rain.some((v) => v > 0)) results.push({ type: 'rain', intensities: Array.from(rain) });
   if (snow.some((v) => v > 0)) results.push({ type: 'snow', intensities: Array.from(snow) });
+  if (freezingRain.some((v) => v > 0))
+    results.push({ type: 'freezing_rain', intensities: Array.from(freezingRain) });
   if (fog.some((v) => v > 0)) results.push({ type: 'fog', intensities: Array.from(fog) });
   return results;
 }

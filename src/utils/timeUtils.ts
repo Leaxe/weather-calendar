@@ -1,5 +1,3 @@
-import type { HourlyData } from '../types';
-
 // Each hour = 60px height
 export const HOUR_HEIGHT = 60;
 export const TOTAL_HOURS = 24;
@@ -41,47 +39,3 @@ export function formatGutterHour(hour: number): string {
   return `${hour - 12} PM`;
 }
 
-interface ConditionDisplay {
-  icon: string;
-  label: string;
-}
-
-/**
- * Determine the dominant condition from numeric weather channels.
- * Returns { icon, label } based on priority rules.
- */
-function dominantCondition(hourData: HourlyData, isNight: boolean): ConditionDisplay {
-  if (hourData.visibility < 2000) {
-    return { icon: '\u{1F32B}\uFE0F', label: 'Fog' };
-  }
-  if (hourData.snowfall > 0) {
-    return { icon: '\u{1F328}\uFE0F', label: 'Snow' };
-  }
-  if (hourData.precipitation > 0) {
-    return { icon: '\u{1F327}\uFE0F', label: 'Rain' };
-  }
-  if (hourData.cloudCover > 70) {
-    return { icon: '\u2601\uFE0F', label: 'Overcast' };
-  }
-  if (hourData.cloudCover > 30) {
-    return { icon: '\u2601\uFE0F', label: 'Cloudy' };
-  }
-  if (hourData.cloudCover > 10) {
-    return { icon: isNight ? '\u2601\uFE0F' : '\u26C5', label: 'Partly Cloudy' };
-  }
-  return { icon: isNight ? '\u{1F319}' : '\u2600\uFE0F', label: 'Clear' };
-}
-
-/**
- * Get condition display label from numeric channels.
- */
-export function conditionLabel(hourData: HourlyData, isNight: boolean): string {
-  return dominantCondition(hourData, isNight).label;
-}
-
-/**
- * Get condition emoji/icon from numeric channels.
- */
-export function conditionIcon(hourData: HourlyData, isNight: boolean): string {
-  return dominantCondition(hourData, isNight).icon;
-}

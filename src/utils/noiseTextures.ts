@@ -57,6 +57,7 @@ interface Configs {
   cloud: CloudFogConfig;
   fog: CloudFogConfig;
   rain: RainConfig;
+  freezing_rain: RainConfig;
   snow: SnowConfig;
 }
 
@@ -92,6 +93,16 @@ const configs: Configs = {
     color: '#c0d8ff',
     minAlpha: 0.3,
     maxAlpha: 0.7,
+  },
+  freezing_rain: {
+    densityPerHour: 35,
+    minLength: 5,
+    maxLength: 12,
+    strokeWidth: 1.8,
+    angle: -75,
+    color: '#d0e8ff',
+    minAlpha: 0.35,
+    maxAlpha: 0.75,
   },
   snow: {
     densityPerHour: 28,
@@ -139,8 +150,8 @@ export function generateDayTexture({
   const ctx = canvas.getContext('2d')!;
   const rand = mulberry32(seed);
 
-  if (type === 'rain') {
-    drawRain(ctx, rand, width, intensities);
+  if (type === 'rain' || type === 'freezing_rain') {
+    drawRain(ctx, rand, width, intensities, type);
   } else if (type === 'snow') {
     drawSnow(ctx, rand, width, intensities);
   } else {
@@ -209,8 +220,9 @@ function drawRain(
   rand: () => number,
   width: number,
   intensities: number[],
+  type: 'rain' | 'freezing_rain' = 'rain',
 ): void {
-  const cfg = configs.rain;
+  const cfg = configs[type];
   const angleRad = (cfg.angle * Math.PI) / 180;
 
   for (let hour = 0; hour < 24; hour++) {

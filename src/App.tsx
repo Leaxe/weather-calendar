@@ -94,12 +94,7 @@ export default function App() {
       {location && data.length > 0 && (
         <>
           <WeekHeader weekData={data} weekStartDate={weekStartDate} />
-          <WeekGrid
-            weekData={data}
-            events={mockEvents}
-            showDetails={false}
-            weekStartDate={weekStartDate}
-          />
+          <WeekGrid weekData={data} events={mockEvents} />
         </>
       )}
 

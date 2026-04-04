@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { buildDayGradient, buildWeatherOverlays } from '../utils/gradientBuilder';
-import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour, conditionIcon } from '../utils/timeUtils';
+import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour } from '../utils/timeUtils';
+
 import { getDayTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
 import EventCard from './EventCard';
@@ -17,10 +18,9 @@ interface TooltipState {
 interface DayColumnProps {
   dayData: DayData;
   events: CalendarEvent[];
-  showDetails: boolean;
 }
 
-export default function DayColumn({ dayData, events, showDetails }: DayColumnProps) {
+export default function DayColumn({ dayData, events }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -117,29 +117,10 @@ export default function DayColumn({ dayData, events, showDetails }: DayColumnPro
           <EventCard key={event.id} event={event} />
         ))}
 
-        {/* Details overlay */}
-        {showDetails && (
-          <div className="day-column__details-overlay">
-            {dayData.hourly
-              .filter((_, i) => i % 3 === 0)
-              .map((h) => {
-                const isNight = h.hour < dayData.sunrise || h.hour > dayData.sunset;
-                return (
-                  <div
-                    key={h.hour}
-                    className="day-column__detail-chip"
-                    style={{ top: h.hour * HOUR_HEIGHT + HOUR_HEIGHT / 2 - 10 }}
-                  >
-                    {conditionIcon(h, isNight)} {Math.round(h.temp)}°
-                  </div>
-                );
-              })}
-          </div>
-        )}
       </div>
 
       {/* Tooltip */}
-      {tooltip && !showDetails && (
+      {tooltip && (
         <WeatherTooltip
           hourData={tooltip.hourData}
           hour={tooltip.hour}
