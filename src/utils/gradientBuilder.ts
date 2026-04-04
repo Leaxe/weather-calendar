@@ -17,7 +17,7 @@ const TWILIGHT_HALF = 0.25; // hours each side (total 30 min transition)
  * Transition is centered on sunrise/sunset so the midpoint (darkness=0.5)
  * aligns exactly with the sun marker.
  */
-function getDarkness(hour: number, sunrise: number, sunset: number): number {
+export function getDarkness(hour: number, sunrise: number, sunset: number): number {
   const dawnStart = sunrise - TWILIGHT_HALF;
   const dawnEnd = sunrise + TWILIGHT_HALF;
   const duskStart = sunset - TWILIGHT_HALF;

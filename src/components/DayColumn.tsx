@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { buildDayGradient, buildWeatherOverlays } from '../utils/gradientBuilder';
+import { buildDayGradient, buildWeatherOverlays, getDarkness } from '../utils/gradientBuilder';
 import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour } from '../utils/timeUtils';
 
 import { getDayTexture } from '../utils/noiseTextures';
@@ -32,6 +32,21 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
   );
 
   const weatherOverlays = useMemo(() => buildWeatherOverlays(dayData.hourly), [dayData]);
+
+  // Night darkening overlay — a gradient of semi-transparent black matching the twilight curve
+  const nightOverlay = useMemo(() => {
+    const { sunrise, sunset } = dayData;
+    const stops: string[] = [];
+    const steps = 48; // every 30 min
+    for (let i = 0; i <= steps; i++) {
+      const h = (i / steps) * 24;
+      const darkness = getDarkness(h, sunrise, sunset);
+      const alpha = darkness * 0.25; // max 25% black at full night
+      const pct = ((h / 24) * 100).toFixed(1);
+      stops.push(`rgba(0,0,0,${alpha.toFixed(3)}) ${pct}%`);
+    }
+    return `linear-gradient(to bottom, ${stops.join(', ')})`;
+  }, [dayData]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -113,6 +128,14 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
               />
             );
           })}
+
+        {/* Night darkening — covers weather overlays */}
+        {hasWeather && (
+          <div
+            className="day-column__night-overlay"
+            style={{ height: TOTAL_HEIGHT, background: nightOverlay }}
+          />
+        )}
 
         {/* Loading shimmer — below events */}
         {isLoading && <div className="day-column__loading-shimmer" />}

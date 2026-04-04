@@ -38,7 +38,7 @@ export function weatherToColor(temp: number, darkness: number): string {
   let color = tempScale(temp);
 
   if (darkness > 0) {
-    color = color.darken(1.8 * darkness).desaturate(0.6 * darkness);
+    color = color.darken(1.2 * darkness).desaturate(0.4 * darkness);
   }
 
   return color.css();
