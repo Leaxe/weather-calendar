@@ -112,11 +112,12 @@ export default function DayColumn({ dayData, events }: DayColumnProps) {
         {/* Now indicator */}
         <NowIndicator dayDate={dayData.date} />
 
-        {/* Events */}
-        {events.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-
+        {/* Timed events (skip all-day) */}
+        {events
+          .filter((e) => !e.isAllDay)
+          .map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
       </div>
 
       {/* Tooltip */}

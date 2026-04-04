@@ -55,4 +55,3 @@ export function wmoConditionIcon(code: number, isNight: boolean): string {
   if (code <= 1 && isNight) return '\u{1F319}';
   return (WMO_CONDITIONS[code] ?? UNKNOWN).icon;
 }
-

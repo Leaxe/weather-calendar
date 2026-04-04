@@ -23,8 +23,8 @@ export default function WeekGrid({ weekData, events }: WeekGridProps) {
     <div className="week-grid" ref={scrollRef}>
       <div className="week-grid__body">
         <TimeGutter />
-        {weekData.map((day, i) => {
-          const dayEvents = events.filter((e) => e.day === i);
+        {weekData.map((day) => {
+          const dayEvents = events.filter((e) => e.date === day.date);
           return <DayColumn key={day.date} dayData={day} events={dayEvents} />;
         })}
       </div>

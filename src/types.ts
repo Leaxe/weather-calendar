@@ -17,11 +17,14 @@ export interface DayData {
 }
 
 export interface CalendarEvent {
-  id: number;
+  id: string;
   title: string;
-  day: number;
+  date: string; // YYYY-MM-DD
   startHour: number;
   endHour: number;
+  isAllDay?: boolean;
+  location?: string;
+  description?: string;
 }
 
 export interface GeoLocation {

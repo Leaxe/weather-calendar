@@ -38,4 +38,3 @@ export function formatGutterHour(hour: number): string {
   if (hour < 12) return `${hour} AM`;
   return `${hour - 12} PM`;
 }
-

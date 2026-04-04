@@ -4,10 +4,10 @@ import WeekGrid from './components/WeekGrid';
 import LocationPicker from './components/LocationPicker';
 import DateNavigation from './components/DateNavigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { usePersistedLocation } from './hooks/usePersistedLocation';
 import { useWeather } from './hooks/useWeather';
-import { mockEvents } from './data/mockEvents';
+import { useCalendarEvents } from './hooks/useCalendarEvents';
+import CalendarImport from './components/CalendarImport';
 import { generateDemoWeek } from './data/demoWeather';
 import { addDays, getSunday, todayStr } from './utils/dateUtils';
 import './styles/global.css';
@@ -40,9 +40,16 @@ function formatDateRange(startDate: string, data: { date: string }[]): string {
 export default function App() {
   const [location, setLocation] = usePersistedLocation();
   const [weekStartDate, setWeekStartDate] = useState(() => getSunday(todayStr()));
-  const [demoMode, setDemoMode] = useState(false);
+  const [demoMode] = useState(false);
   const { data: apiData, isLoading, error } = useWeather(location, weekStartDate);
   const data = demoMode ? generateDemoWeek(weekStartDate) : apiData;
+  const {
+    events,
+    source: calSource,
+    importFromFile,
+    importFromUrl,
+    clearCalendar,
+  } = useCalendarEvents(weekStartDate);
 
   return (
     <div className="app">
@@ -57,14 +64,12 @@ export default function App() {
           <span className="app-header__subtitle">{formatDateRange(weekStartDate, data)}</span>
         </div>
         <div className="app-header__right">
-          <Button
-            variant={demoMode ? 'default' : 'ghost'}
-            size="sm"
-            className="text-xs"
-            onClick={() => setDemoMode((d) => !d)}
-          >
-            Demo
-          </Button>
+          <CalendarImport
+            source={calSource}
+            onFileImport={importFromFile}
+            onUrlImport={importFromUrl}
+            onClear={clearCalendar}
+          />
           <LocationPicker
             location={location}
             onSelect={setLocation}
@@ -98,7 +103,7 @@ export default function App() {
       {(demoMode || (location && data.length > 0)) && (
         <>
           <WeekHeader weekData={data} />
-          <WeekGrid weekData={data} events={mockEvents} />
+          <WeekGrid weekData={data} events={events} />
         </>
       )}
 
