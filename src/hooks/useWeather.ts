@@ -51,6 +51,16 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
     [location, weekStartDate],
   );
 
+  // Refresh every hour
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(
+      () => setRefreshTick((t) => t + 1),
+      60 * 60 * 1000,
+    );
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!cacheKey || !location) return;
 
@@ -61,7 +71,11 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
       return;
     }
 
-    setFetchState((prev) => ({ ...prev, isLoading: true, error: null }));
+    // Don't show loading indicator for background refreshes (when we already have data)
+    const isBackgroundRefresh = fetchState.data && fetchState.dataKey === cacheKey;
+    if (!isBackgroundRefresh) {
+      setFetchState((prev) => ({ ...prev, isLoading: true, error: null }));
+    }
 
     const controller = new AbortController();
     fetchWeekForecast(location.latitude, location.longitude, weekStartDate, controller.signal)
@@ -76,7 +90,8 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
       });
 
     return () => controller.abort();
-  }, [location, cacheKey, weekStartDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, cacheKey, weekStartDate, refreshTick]);
 
   if (!location) {
     return { data: makePlaceholderWeek(weekStartDate), hasWeather: false, isLoading: false, error: null };
