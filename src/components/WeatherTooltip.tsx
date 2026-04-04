@@ -34,8 +34,10 @@ export default function WeatherTooltip({
       className="pointer-events-none fixed z-50 min-w-[140px] rounded-lg border border-border/50 bg-popover/95 px-3.5 py-2.5 shadow-lg backdrop-blur-md"
       style={{
         top: position.y,
-        left: position.x,
-        transform: `translate(${position.flipX ? '-100%' : '0'}, ${position.flipY ? '-100%' : '0'})`,
+        ...(position.flipX
+          ? { right: window.innerWidth - position.x }
+          : { left: position.x }),
+        transform: position.flipY ? 'translateY(-100%)' : undefined,
       }}
     >
       <div className="mb-1 text-xs text-muted-foreground">
