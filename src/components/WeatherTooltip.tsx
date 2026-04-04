@@ -51,11 +51,6 @@ export default function WeatherTooltip({
         <span>
           {'\u{1F4A8}'} {hourData.windSpeed} mph
         </span>
-        {hourData.visibility < 10000 && (
-          <span>
-            {'\u{1F441}\uFE0F'} {(hourData.visibility / 1000).toFixed(1)}km
-          </span>
-        )}
       </div>
     </div>,
     document.body,

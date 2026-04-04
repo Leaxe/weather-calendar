@@ -82,8 +82,8 @@ const CLOUD_SCALE = 100; // cloudCover / CLOUD_SCALE = intensity
 const PRECIP_MAX_MM = 5;
 const PRECIP_MIN_INTENSITY = 0.4; // floor so drizzle/light snow is still visible
 
-// Fog: visibility threshold in meters (below this, fog overlay appears)
-const FOG_VISIBILITY_THRESHOLD = 5000;
+// Fog: intensity when WMO code indicates fog
+const FOG_INTENSITY = 0.6;
 
 /**
  * Map WMO weather code to a precipitation overlay type.
@@ -114,7 +114,7 @@ function weatherCodeToOverlay(code: number): OverlayType | null {
 /**
  * Builds full-day intensity curves per overlay type.
  * Uses WMO weather_code to determine precipitation type (rain/snow/freezing rain),
- * precipitation mm for intensity, cloud cover for cloud overlay, visibility for fog.
+ * precipitation mm for intensity, cloud cover for cloud overlay, WMO code for fog.
  * Returns an array of { type, intensities: number[24] }.
  */
 export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[] {
@@ -141,9 +141,9 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
       cloud[i] = h.cloudCover / CLOUD_SCALE;
     }
 
-    // Fog layers with anything
-    if (h.visibility < FOG_VISIBILITY_THRESHOLD) {
-      fog[i] = 1 - h.visibility / FOG_VISIBILITY_THRESHOLD;
+    // Fog layers with anything (WMO codes 45=fog, 48=rime fog)
+    if (h.weatherCode === 45 || h.weatherCode === 48) {
+      fog[i] = FOG_INTENSITY;
     }
   }
 

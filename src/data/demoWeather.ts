@@ -12,58 +12,15 @@ export function generateDemoWeek(startDate: string): DayData[] {
     weatherCode: number;
     cloudCover: number;
     precipitation: number;
-    visibility: number;
     temp: number;
   }[] = [
-    {
-      label: 'Clear',
-      weatherCode: 0,
-      cloudCover: 5,
-      precipitation: 0,
-      visibility: 16000,
-      temp: 72,
-    },
-    {
-      label: 'Cloudy',
-      weatherCode: 3,
-      cloudCover: 85,
-      precipitation: 0,
-      visibility: 12000,
-      temp: 58,
-    },
-    {
-      label: 'Rain',
-      weatherCode: 61,
-      cloudCover: 90,
-      precipitation: 1.5,
-      visibility: 8000,
-      temp: 52,
-    },
-    {
-      label: 'Heavy Rain',
-      weatherCode: 65,
-      cloudCover: 95,
-      precipitation: 8,
-      visibility: 4000,
-      temp: 50,
-    },
-    {
-      label: 'Snow',
-      weatherCode: 73,
-      cloudCover: 90,
-      precipitation: 2,
-      visibility: 3000,
-      temp: 30,
-    },
-    {
-      label: 'Freezing Rain',
-      weatherCode: 66,
-      cloudCover: 90,
-      precipitation: 2,
-      visibility: 5000,
-      temp: 33,
-    },
-    { label: 'Fog', weatherCode: 45, cloudCover: 60, precipitation: 0, visibility: 500, temp: 48 },
+    { label: 'Clear', weatherCode: 0, cloudCover: 5, precipitation: 0, temp: 72 },
+    { label: 'Cloudy', weatherCode: 3, cloudCover: 85, precipitation: 0, temp: 58 },
+    { label: 'Rain', weatherCode: 61, cloudCover: 90, precipitation: 1.5, temp: 52 },
+    { label: 'Heavy Rain', weatherCode: 65, cloudCover: 95, precipitation: 8, temp: 50 },
+    { label: 'Snow', weatherCode: 73, cloudCover: 90, precipitation: 2, temp: 30 },
+    { label: 'Freezing Rain', weatherCode: 66, cloudCover: 90, precipitation: 2, temp: 33 },
+    { label: 'Fog', weatherCode: 45, cloudCover: 60, precipitation: 0, temp: 48 },
   ];
 
   return conditions.map((cond, i) => {
@@ -72,7 +29,6 @@ export function generateDemoWeek(startDate: string): DayData[] {
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
 
     const hourly: HourlyData[] = Array.from({ length: 24 }, (_, hour) => {
-      // Vary intensity through the day — peaks at midday
       const dayCurve = Math.sin((hour / 24) * Math.PI);
       const intensity = 0.3 + 0.7 * dayCurve;
 
@@ -87,7 +43,6 @@ export function generateDemoWeek(startDate: string): DayData[] {
             : hour >= 6 && hour <= 20
               ? cond.weatherCode
               : 0,
-        visibility: Math.round(cond.visibility + (16000 - cond.visibility) * (1 - intensity)),
         windSpeed: Math.round((5 + dayCurve * 8) * 10) / 10,
       };
     });

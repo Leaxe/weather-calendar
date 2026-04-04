@@ -38,7 +38,6 @@ const HOURLY_PARAMS = [
   'cloud_cover',
   'precipitation',
   'weather_code',
-  'visibility',
   'wind_speed_10m',
 ].join(',');
 
@@ -120,7 +119,6 @@ interface ApiResponse {
     cloud_cover: number[];
     precipitation: number[];
     weather_code: number[];
-    visibility: number[];
     wind_speed_10m: number[];
   };
 }
@@ -150,7 +148,6 @@ function mapApiResponse(data: ApiResponse): DayData[] {
         cloudCover: hourly.cloud_cover[i] ?? 0,
         precipitation: hourly.precipitation[i] ?? 0,
         weatherCode: hourly.weather_code[i] ?? 0,
-        visibility: hourly.visibility[i] ?? 16000,
         windSpeed: hourly.wind_speed_10m[i] ?? 0,
       });
     }

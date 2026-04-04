@@ -4,7 +4,6 @@ export interface HourlyData {
   cloudCover: number;
   precipitation: number;
   weatherCode: number;
-  visibility: number;
   windSpeed: number;
 }
 
