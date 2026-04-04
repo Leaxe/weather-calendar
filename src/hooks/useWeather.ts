@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { GeoLocation, DayData } from '../types';
+import type { GeoLocation, DayData, HourlyData } from '../types';
 import { fetchWeekForecast } from '../services/weatherApi';
+import { addDays } from '../utils/dateUtils';
 
 interface FetchState {
   data: DayData[] | null;
+  dataKey: string | null; // which cacheKey this data belongs to
   isLoading: boolean;
   error: string | null;
 }
@@ -14,9 +16,30 @@ interface WeatherResult {
   error: string | null;
 }
 
+/**
+ * Generate empty placeholder days for a week so the grid can render immediately.
+ */
+function makePlaceholderWeek(startDate: string): DayData[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(startDate, i);
+    const d = new Date(date + 'T12:00:00');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const hourly: HourlyData[] = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      temp: 60,
+      cloudCover: 0,
+      precipitation: 0,
+      weatherCode: 0,
+      windSpeed: 0,
+    }));
+    return { date, dayName, sunrise: 6, sunset: 19, hourly };
+  });
+}
+
 export function useWeather(location: GeoLocation | null, weekStartDate: string): WeatherResult {
   const [fetchState, setFetchState] = useState<FetchState>({
     data: null,
+    dataKey: null,
     isLoading: false,
     error: null,
   });
@@ -33,7 +56,7 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
     const now = Date.now();
     const cached = cacheRef.current;
     if (cached && cached.key === cacheKey && now - cached.time < 60000) {
-      setFetchState({ data: cached.data, isLoading: false, error: null });
+      setFetchState({ data: cached.data, dataKey: cacheKey, isLoading: false, error: null });
       return;
     }
 
@@ -43,12 +66,12 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
     fetchWeekForecast(location.latitude, location.longitude, weekStartDate, controller.signal)
       .then((result) => {
         cacheRef.current = { key: cacheKey, data: result, time: Date.now() };
-        setFetchState({ data: result, isLoading: false, error: null });
+        setFetchState({ data: result, dataKey: cacheKey, isLoading: false, error: null });
       })
       .catch((err) => {
         if (err instanceof DOMException && err.name === 'AbortError') return;
         const message = err instanceof Error ? err.message : 'Failed to load weather data';
-        setFetchState({ data: null, isLoading: false, error: message });
+        setFetchState((prev) => ({ ...prev, isLoading: false, error: message }));
       });
 
     return () => controller.abort();
@@ -58,8 +81,13 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
     return { data: [], isLoading: false, error: null };
   }
 
+  // If we have data for the current week, use it.
+  // If data is from a different week (stale) or null, show placeholders.
   return {
-    data: fetchState.data ?? [],
+    data:
+      fetchState.data && fetchState.dataKey === cacheKey
+        ? fetchState.data
+        : makePlaceholderWeek(weekStartDate),
     isLoading: fetchState.isLoading,
     error: fetchState.error,
   };

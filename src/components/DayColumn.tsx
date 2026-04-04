@@ -18,9 +18,10 @@ interface TooltipState {
 interface DayColumnProps {
   dayData: DayData;
   events: CalendarEvent[];
+  isLoading?: boolean;
 }
 
-export default function DayColumn({ dayData, events }: DayColumnProps) {
+export default function DayColumn({ dayData, events, isLoading }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -104,6 +105,9 @@ export default function DayColumn({ dayData, events }: DayColumnProps) {
             />
           );
         })}
+
+        {/* Loading shimmer — below events */}
+        {isLoading && <div className="day-column__loading-shimmer" />}
 
         {/* Sunrise / Sunset markers */}
         <SunMarker hour={dayData.sunrise} type="sunrise" />

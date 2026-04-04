@@ -7,9 +7,10 @@ import type { DayData, CalendarEvent } from '../types';
 interface WeekGridProps {
   weekData: DayData[];
   events: CalendarEvent[];
+  isLoading?: boolean;
 }
 
-export default function WeekGrid({ weekData, events }: WeekGridProps) {
+export default function WeekGrid({ weekData, events, isLoading }: WeekGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to ~7 AM on mount
@@ -25,7 +26,9 @@ export default function WeekGrid({ weekData, events }: WeekGridProps) {
         <TimeGutter />
         {weekData.map((day) => {
           const dayEvents = events.filter((e) => e.date === day.date);
-          return <DayColumn key={day.date} dayData={day} events={dayEvents} />;
+          return (
+            <DayColumn key={day.date} dayData={day} events={dayEvents} isLoading={isLoading} />
+          );
         })}
       </div>
     </div>

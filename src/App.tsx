@@ -14,7 +14,6 @@ import './styles/global.css';
 
 function formatDateRange(startDate: string, data: { date: string }[]): string {
   if (data.length === 0) {
-    // Format from weekStartDate
     const first = new Date(startDate + 'T12:00:00');
     const lastStr = addDays(startDate, 6);
     const last = new Date(lastStr + 'T12:00:00');
@@ -53,6 +52,8 @@ export default function App() {
     clearCalendar,
   } = useCalendarEvents(weekStartDate);
 
+  const showCalendar = demoMode || !!location;
+
   return (
     <div className="app">
       <header className="app-header">
@@ -88,32 +89,28 @@ export default function App() {
         </Alert>
       )}
 
-      {isLoading && (
-        <Alert className="rounded-none border-x-0 border-t-0 bg-accent/50 py-1.5">
-          <AlertDescription className="text-center text-xs text-muted-foreground">
-            Loading weather data...
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {!location && !demoMode && !isLoading && (
+      {!location && !demoMode && (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Search for a location to see the weather forecast.
           </p>
         </div>
       )}
 
-      {(demoMode || (location && data.length > 0)) && (
+      {showCalendar && (
         <>
           <WeekHeader weekData={data} />
-          <WeekGrid weekData={data} events={events} />
+          <WeekGrid weekData={data} events={events} isLoading={isLoading} />
         </>
       )}
 
-      {location && data.length === 0 && !isLoading && !error && (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground text-sm">Loading...</p>
+      {/* Loading toast — floats over the calendar */}
+      {isLoading && (
+        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-popover/95 px-4 py-2 shadow-lg backdrop-blur-md">
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+            <span className="text-xs text-muted-foreground">Loading weather data...</span>
+          </div>
         </div>
       )}
     </div>

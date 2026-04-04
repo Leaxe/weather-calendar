@@ -185,6 +185,8 @@ html, body, #root {
 .day-column__gradient {
   position: relative;
   width: 100%;
+  overflow: hidden;
+  transition: background 0.8s ease-in-out;
 }
 
 .day-column__gridline {
@@ -196,6 +198,29 @@ html, body, #root {
   pointer-events: none;
 }
 
+/* ===== Loading Shimmer ===== */
+.day-column__loading-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 40%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.12) 60%,
+    transparent 100%
+  );
+  background-size: 100% 300%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 200%; }
+  100% { background-position: 0% -100%; }
+}
+
 /* ===== Weather Condition Overlays ===== */
 .wx-overlay {
   position: absolute;
@@ -203,6 +228,12 @@ html, body, #root {
   right: 0;
   z-index: 1;
   pointer-events: none;
+  animation: fade-in 0.6s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* All overlays use canvas-generated textures (set inline via backgroundImage) */
@@ -214,6 +245,7 @@ html, body, #root {
   right: 0;
   z-index: 3;
   pointer-events: none;
+  animation: fade-in 0.8s ease-out;
 }
 
 .sun-marker__line {
