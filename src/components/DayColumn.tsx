@@ -12,7 +12,7 @@ import type { DayData, CalendarEvent, HourlyData } from '../types';
 interface TooltipState {
   hourData: HourlyData;
   hour: number;
-  position: { x: number; y: number };
+  position: { x: number; y: number; flipX: boolean; flipY: boolean };
 }
 
 interface DayColumnProps {
@@ -44,14 +44,20 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
       const hourData = dayData.hourly[hourIndex];
 
       // Tooltip positioned in viewport-fixed coordinates via position:fixed
-      const colWidth = rect.width;
-      let x = e.clientX + 14;
-      if (e.clientX - rect.left + 14 + 160 > colWidth) x = e.clientX - 160;
+      // Flip horizontally/vertically to stay within viewport
+      const gap = 12;
+      const flipX = e.clientX > window.innerWidth - 240;
+      const flipY = e.clientY > window.innerHeight * 0.75;
 
       setTooltip({
         hourData,
         hour,
-        position: { x, y: e.clientY + 14 },
+        position: {
+          x: e.clientX + (flipX ? -gap : gap),
+          y: e.clientY + (flipY ? -gap : gap),
+          flipX,
+          flipY,
+        },
       });
     },
     [dayData],

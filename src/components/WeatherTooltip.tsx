@@ -6,6 +6,8 @@ import type { HourlyData } from '../types';
 interface TooltipPosition {
   x: number;
   y: number;
+  flipX: boolean;
+  flipY: boolean;
 }
 
 interface WeatherTooltipProps {
@@ -30,7 +32,11 @@ export default function WeatherTooltip({
   return createPortal(
     <div
       className="pointer-events-none fixed z-50 min-w-[140px] rounded-lg border border-border/50 bg-popover/95 px-3.5 py-2.5 shadow-lg backdrop-blur-md"
-      style={{ top: position.y, left: position.x }}
+      style={{
+        top: position.y,
+        left: position.x,
+        transform: `translate(${position.flipX ? '-100%' : '0'}, ${position.flipY ? '-100%' : '0'})`,
+      }}
     >
       <div className="mb-1 text-xs text-muted-foreground">
         {wmoConditionIcon(hourData.weatherCode, isNight)} {formatHour(hour)}
