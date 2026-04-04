@@ -46,8 +46,10 @@ export default function App() {
   const {
     events,
     source: calSource,
+    isRefreshing,
     importFromFile,
     importFromUrl,
+    refresh: refreshCalendar,
     clearCalendar,
   } = useCalendarEvents(weekStartDate);
 
@@ -66,8 +68,10 @@ export default function App() {
         <div className="app-header__right">
           <CalendarImport
             source={calSource}
+            isRefreshing={isRefreshing}
             onFileImport={importFromFile}
             onUrlImport={importFromUrl}
+            onRefresh={refreshCalendar}
             onClear={clearCalendar}
           />
           <LocationPicker

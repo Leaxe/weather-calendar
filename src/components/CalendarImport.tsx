@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Calendar, X, Upload, Link } from 'lucide-react';
+import { Calendar, X, Upload, Link, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -7,15 +7,19 @@ import type { CalendarSource } from '../hooks/useCalendarEvents';
 
 interface CalendarImportProps {
   source: CalendarSource | null;
+  isRefreshing: boolean;
   onFileImport: (file: File) => Promise<void>;
   onUrlImport: (url: string) => Promise<void>;
+  onRefresh: () => void;
   onClear: () => void;
 }
 
 export default function CalendarImport({
   source,
+  isRefreshing,
   onFileImport,
   onUrlImport,
+  onRefresh,
   onClear,
 }: CalendarImportProps) {
   const [open, setOpen] = useState(false);
@@ -140,15 +144,27 @@ export default function CalendarImport({
         </PopoverContent>
       </Popover>
       {source && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          onClick={onClear}
-          aria-label="Disconnect calendar"
-        >
-          <X className="h-3 w-3" />
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh calendar"
+          >
+            <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={onClear}
+            aria-label="Disconnect calendar"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </>
       )}
     </div>
   );
