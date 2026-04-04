@@ -8,6 +8,7 @@ import { usePersistedLocation } from './hooks/usePersistedLocation';
 import { useWeather } from './hooks/useWeather';
 import { useCalendarEvents } from './hooks/useCalendarEvents';
 import CalendarImport from './components/CalendarImport';
+import Logo from './components/Logo';
 import { generateDemoWeek } from './data/demoWeather';
 import { addDays, getSunday, todayStr } from './utils/dateUtils';
 import './styles/global.css';
@@ -40,7 +41,12 @@ export default function App() {
   const [location, setLocation] = usePersistedLocation();
   const [weekStartDate, setWeekStartDate] = useState(() => getSunday(todayStr()));
   const [demoMode] = useState(false);
-  const { data: apiData, hasWeather: apiHasWeather, isLoading, error } = useWeather(location, weekStartDate);
+  const {
+    data: apiData,
+    hasWeather: apiHasWeather,
+    isLoading,
+    error,
+  } = useWeather(location, weekStartDate);
   const data = demoMode ? generateDemoWeek(weekStartDate) : apiData;
   const hasWeather = demoMode || apiHasWeather;
   const {
@@ -57,6 +63,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="app-header__left">
+          <Logo size={36} />
           <h1 className="app-header__title">Weather Calendar</h1>
           <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
           <span className="app-header__subtitle">{formatDateRange(weekStartDate, data)}</span>

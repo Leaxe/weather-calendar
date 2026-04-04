@@ -48,8 +48,8 @@ html, body, #root {
 
 .app-header__left {
   display: flex;
-  align-items: baseline;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
 }
 
 .app-header__right {
