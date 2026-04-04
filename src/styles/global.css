@@ -71,6 +71,7 @@ html, body, #root {
   border-bottom: 1px solid var(--border-color-strong);
   background: var(--bg-surface);
   height: var(--day-header-height);
+  padding-right: 8px; /* match scrollbar width */
 }
 
 .week-header__gutter {

@@ -4,9 +4,11 @@ import WeekGrid from './components/WeekGrid';
 import LocationPicker from './components/LocationPicker';
 import DateNavigation from './components/DateNavigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { usePersistedLocation } from './hooks/usePersistedLocation';
 import { useWeather } from './hooks/useWeather';
 import { mockEvents } from './data/mockEvents';
+import { generateDemoWeek } from './data/demoWeather';
 import { addDays, getSunday, todayStr } from './utils/dateUtils';
 import './styles/global.css';
 
@@ -37,10 +39,10 @@ function formatDateRange(startDate: string, data: { date: string }[]): string {
 
 export default function App() {
   const [location, setLocation] = usePersistedLocation();
-  const [weekStartDate, setWeekStartDate] = useState(() =>
-    getSunday(todayStr()),
-  );
-  const { data, isLoading, error } = useWeather(location, weekStartDate);
+  const [weekStartDate, setWeekStartDate] = useState(() => getSunday(todayStr()));
+  const [demoMode, setDemoMode] = useState(false);
+  const { data: apiData, isLoading, error } = useWeather(location, weekStartDate);
+  const data = demoMode ? generateDemoWeek(weekStartDate) : apiData;
 
   return (
     <div className="app">
@@ -55,6 +57,14 @@ export default function App() {
           <span className="app-header__subtitle">{formatDateRange(weekStartDate, data)}</span>
         </div>
         <div className="app-header__right">
+          <Button
+            variant={demoMode ? 'default' : 'ghost'}
+            size="sm"
+            className="text-xs"
+            onClick={() => setDemoMode((d) => !d)}
+          >
+            Demo
+          </Button>
           <LocationPicker
             location={location}
             onSelect={setLocation}
@@ -77,7 +87,7 @@ export default function App() {
         </Alert>
       )}
 
-      {!location && !isLoading && (
+      {!location && !demoMode && !isLoading && (
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground text-sm">
             Search for a location to see the weather forecast.
@@ -85,7 +95,7 @@ export default function App() {
         </div>
       )}
 
-      {location && data.length > 0 && (
+      {(demoMode || (location && data.length > 0)) && (
         <>
           <WeekHeader weekData={data} />
           <WeekGrid weekData={data} events={mockEvents} />
