@@ -8,11 +8,40 @@ interface GradientStop {
   color: string;
 }
 
+// Civil twilight duration centered on sunrise/sunset
+const TWILIGHT_HALF = 0.25; // hours each side (total 30 min transition)
+
+/**
+ * Compute darkness level at a given fractional hour.
+ * 0 = full daylight, 1 = full night, 0-1 = twilight.
+ * Transition is centered on sunrise/sunset so the midpoint (darkness=0.5)
+ * aligns exactly with the sun marker.
+ */
+function getDarkness(hour: number, sunrise: number, sunset: number): number {
+  const dawnStart = sunrise - TWILIGHT_HALF;
+  const dawnEnd = sunrise + TWILIGHT_HALF;
+  const duskStart = sunset - TWILIGHT_HALF;
+  const duskEnd = sunset + TWILIGHT_HALF;
+
+  // Full night
+  if (hour <= dawnStart || hour >= duskEnd) return 1;
+  // Full day
+  if (hour >= dawnEnd && hour <= duskStart) return 0;
+  // Dawn twilight (centered on sunrise)
+  if (hour < dawnEnd) {
+    const t = (hour - dawnStart) / (TWILIGHT_HALF * 2);
+    return (1 + Math.cos(t * Math.PI)) / 2;
+  }
+  // Dusk twilight (centered on sunset)
+  const t = (hour - duskStart) / (TWILIGHT_HALF * 2);
+  return (1 - Math.cos(t * Math.PI)) / 2;
+}
+
 /**
  * Builds a CSS linear-gradient from hourly weather data.
  *
- * Generates color stops in LAB space via weatherToColor, then uses
- * chroma.js to add smooth sub-hour interpolation around sunrise/sunset.
+ * Generates color stops in LAB space via weatherToColor with continuous
+ * darkness (0=day, 1=night) for smooth twilight transitions.
  */
 export function buildDayGradient(
   hourlyData: HourlyData[],
@@ -21,36 +50,24 @@ export function buildDayGradient(
 ): string {
   const rawStops: GradientStop[] = [];
 
-  // One stop per hour
-  for (const { hour, temp } of hourlyData) {
-    const isNight = hour < sunrise || hour > sunset;
-    const color = weatherToColor(temp, null, isNight);
-    rawStops.push({ hour, pct: (hour / 24) * 100, color });
-  }
+  // Generate stops at sub-hour intervals for smooth twilight
+  const stepsPerHour = 4;
+  for (let step = 0; step <= 24 * stepsPerHour; step++) {
+    const h = step / stepsPerHour;
+    const pct = (h / 24) * 100;
 
-  // Add sub-hour stops around sunrise/sunset for a smooth day↔night blend.
-  // We interpolate between the "night" and "day" color at the boundary
-  // using chroma.mix in LAB space for perceptually even fading.
-  const transitionWidth = 0.8; // hours on each side
-  const steps = 5;
+    // Interpolate temperature from hourly data
+    const lowerIdx = Math.max(0, Math.min(23, Math.floor(h)));
+    const upperIdx = Math.min(23, Math.ceil(h));
+    const frac = h - lowerIdx;
+    const temp =
+      lowerIdx === upperIdx
+        ? hourlyData[lowerIdx].temp
+        : hourlyData[lowerIdx].temp * (1 - frac) + hourlyData[upperIdx].temp * frac;
 
-  for (const anchor of [sunrise, sunset]) {
-    const startH = anchor - transitionWidth;
-
-    for (let i = 1; i < steps; i++) {
-      const t = i / steps;
-      const h = startH + t * (transitionWidth * 2);
-      if (h < 0 || h > 24 || Number.isInteger(h)) continue;
-
-      // Interpolate temperature
-      const lowerIdx = Math.max(0, Math.min(23, Math.floor(h)));
-      const upperIdx = Math.min(23, lowerIdx + 1);
-      const frac = h - lowerIdx;
-      const temp = hourlyData[lowerIdx].temp * (1 - frac) + hourlyData[upperIdx].temp * frac;
-      const isNight = h < sunrise || h > sunset;
-      const color = weatherToColor(temp, null, isNight);
-      rawStops.push({ hour: h, pct: (h / 24) * 100, color });
-    }
+    const darkness = getDarkness(h, sunrise, sunset);
+    const color = weatherToColor(temp, darkness);
+    rawStops.push({ pct, color });
   }
 
   rawStops.sort((a, b) => a.pct - b.pct);
