@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import { hourToPixel } from '../utils/timeUtils';
+import { todayStr } from '../utils/dateUtils';
 
 interface NowIndicatorProps {
   dayDate: string;
-}
-
-function getTodayStr(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function getNowHour(): number {
@@ -19,11 +16,11 @@ function getNowHour(): number {
  * Only renders on today's column. Updates every minute.
  */
 export default function NowIndicator({ dayDate }: NowIndicatorProps) {
-  const [now, setNow] = useState(() => ({ today: getTodayStr(), hour: getNowHour() }));
+  const [now, setNow] = useState(() => ({ today: todayStr(), hour: getNowHour() }));
 
   useEffect(() => {
     const id = setInterval(() => {
-      setNow({ today: getTodayStr(), hour: getNowHour() });
+      setNow({ today: todayStr(), hour: getNowHour() });
     }, 60000);
     return () => clearInterval(id);
   }, []);

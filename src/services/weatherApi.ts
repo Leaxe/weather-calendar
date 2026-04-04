@@ -4,11 +4,7 @@ const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const ARCHIVE_URL = 'https://archive-api.open-meteo.com/v1/archive';
 
-export function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T12:00:00');
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
+import { addDays, todayStr } from '../utils/dateUtils';
 
 export async function searchCities(query: string, signal?: AbortSignal): Promise<GeoLocation[]> {
   if (!query.trim()) return [];
@@ -72,7 +68,7 @@ export async function fetchWeekForecast(
   signal?: AbortSignal,
 ): Promise<DayData[]> {
   const endDate = addDays(startDate, 6);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
 
   // All dates in the future or today: use forecast API
   if (startDate >= today) {

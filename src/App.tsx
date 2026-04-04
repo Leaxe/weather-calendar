@@ -7,14 +7,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePersistedLocation } from './hooks/usePersistedLocation';
 import { useWeather } from './hooks/useWeather';
 import { mockEvents } from './data/mockEvents';
-import { addDays } from './services/weatherApi';
+import { addDays, getSunday, todayStr } from './utils/dateUtils';
 import './styles/global.css';
-
-function getSunday(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00');
-  d.setDate(d.getDate() - d.getDay());
-  return d.toISOString().slice(0, 10);
-}
 
 function formatDateRange(startDate: string, data: { date: string }[]): string {
   if (data.length === 0) {
@@ -44,7 +38,7 @@ function formatDateRange(startDate: string, data: { date: string }[]): string {
 export default function App() {
   const [location, setLocation] = usePersistedLocation();
   const [weekStartDate, setWeekStartDate] = useState(() =>
-    getSunday(new Date().toISOString().slice(0, 10)),
+    getSunday(todayStr()),
   );
   const { data, isLoading, error } = useWeather(location, weekStartDate);
 
@@ -93,7 +87,7 @@ export default function App() {
 
       {location && data.length > 0 && (
         <>
-          <WeekHeader weekData={data} weekStartDate={weekStartDate} />
+          <WeekHeader weekData={data} />
           <WeekGrid weekData={data} events={mockEvents} />
         </>
       )}

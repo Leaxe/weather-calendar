@@ -1,12 +1,12 @@
 import type { DayData } from '../types';
+import { todayStr } from '../utils/dateUtils';
 
 interface WeekHeaderProps {
   weekData: DayData[];
-  weekStartDate?: string;
 }
 
 export default function WeekHeader({ weekData }: WeekHeaderProps) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
 
   return (
     <div className="week-header">

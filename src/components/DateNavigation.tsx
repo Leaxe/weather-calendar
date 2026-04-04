@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { addDays } from '../services/weatherApi';
+import { addDays, getSunday, todayStr } from '../utils/dateUtils';
 
 interface DateNavigationProps {
   weekStartDate: string;
@@ -8,14 +8,8 @@ interface DateNavigationProps {
   disabled?: boolean;
 }
 
-function getSunday(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00');
-  d.setDate(d.getDate() - d.getDay());
-  return d.toISOString().slice(0, 10);
-}
-
 export default function DateNavigation({ weekStartDate, onChange, disabled }: DateNavigationProps) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
   const currentWeekStart = getSunday(today);
   const isCurrentWeek = weekStartDate === currentWeekStart;
   const maxStart = addDays(today, 16);

@@ -78,8 +78,9 @@ export function buildDayGradient(
 const CLOUD_MIN_PCT = 10;
 const CLOUD_SCALE = 100; // cloudCover / CLOUD_SCALE = intensity
 
-// Precipitation: max mm for full intensity (applies to rain, snow, freezing rain)
+// Precipitation: max mm for full intensity, and minimum visible intensity
 const PRECIP_MAX_MM = 5;
+const PRECIP_MIN_INTENSITY = 0.4; // floor so drizzle/light snow is still visible
 
 // Fog: visibility threshold in meters (below this, fog overlay appears)
 const FOG_VISIBILITY_THRESHOLD = 5000;
@@ -129,7 +130,10 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
 
     // Precipitation overlays suppress clouds
     if (precipType && h.precipitation > 0) {
-      const intensity = Math.min(1, h.precipitation / PRECIP_MAX_MM);
+      const intensity = Math.max(
+        PRECIP_MIN_INTENSITY,
+        Math.min(1, h.precipitation / PRECIP_MAX_MM),
+      );
       if (precipType === 'snow') snow[i] = intensity;
       else if (precipType === 'freezing_rain') freezingRain[i] = intensity;
       else rain[i] = intensity;
