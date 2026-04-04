@@ -72,7 +72,11 @@ export default function CalendarImport({
     [handleFile],
   );
 
-  const label = source ? (source.type === 'file' ? source.name : 'Calendar linked') : 'Calendar';
+  const label = source
+    ? source.type === 'file'
+      ? source.name
+      : 'Calendar linked'
+    : 'Select Calendar';
 
   return (
     <div className="flex items-center gap-1">

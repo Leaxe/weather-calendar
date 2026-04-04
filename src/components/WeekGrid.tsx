@@ -8,9 +8,10 @@ interface WeekGridProps {
   weekData: DayData[];
   events: CalendarEvent[];
   isLoading?: boolean;
+  hasWeather?: boolean;
 }
 
-export default function WeekGrid({ weekData, events, isLoading }: WeekGridProps) {
+export default function WeekGrid({ weekData, events, isLoading, hasWeather }: WeekGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to ~7 AM on mount
@@ -27,7 +28,13 @@ export default function WeekGrid({ weekData, events, isLoading }: WeekGridProps)
         {weekData.map((day) => {
           const dayEvents = events.filter((e) => e.date === day.date);
           return (
-            <DayColumn key={day.date} dayData={day} events={dayEvents} isLoading={isLoading} />
+            <DayColumn
+              key={day.date}
+              dayData={day}
+              events={dayEvents}
+              isLoading={isLoading}
+              hasWeather={hasWeather}
+            />
           );
         })}
       </div>

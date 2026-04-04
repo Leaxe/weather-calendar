@@ -40,8 +40,9 @@ export default function App() {
   const [location, setLocation] = usePersistedLocation();
   const [weekStartDate, setWeekStartDate] = useState(() => getSunday(todayStr()));
   const [demoMode] = useState(false);
-  const { data: apiData, isLoading, error } = useWeather(location, weekStartDate);
+  const { data: apiData, hasWeather: apiHasWeather, isLoading, error } = useWeather(location, weekStartDate);
   const data = demoMode ? generateDemoWeek(weekStartDate) : apiData;
+  const hasWeather = demoMode || apiHasWeather;
   const {
     events,
     source: calSource,
@@ -52,18 +53,12 @@ export default function App() {
     clearCalendar,
   } = useCalendarEvents(weekStartDate);
 
-  const showCalendar = demoMode || !!location;
-
   return (
     <div className="app">
       <header className="app-header">
         <div className="app-header__left">
           <h1 className="app-header__title">Weather Calendar</h1>
-          <DateNavigation
-            weekStartDate={weekStartDate}
-            onChange={setWeekStartDate}
-            disabled={!location}
-          />
+          <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
           <span className="app-header__subtitle">{formatDateRange(weekStartDate, data)}</span>
         </div>
         <div className="app-header__right">
@@ -89,20 +84,8 @@ export default function App() {
         </Alert>
       )}
 
-      {!location && !demoMode && (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">
-            Search for a location to see the weather forecast.
-          </p>
-        </div>
-      )}
-
-      {showCalendar && (
-        <>
-          <WeekHeader weekData={data} />
-          <WeekGrid weekData={data} events={events} isLoading={isLoading} />
-        </>
-      )}
+      <WeekHeader weekData={data} hasWeather={hasWeather} />
+      <WeekGrid weekData={data} events={events} isLoading={isLoading} hasWeather={hasWeather} />
 
       {/* Loading toast — floats over the calendar */}
       {isLoading && (

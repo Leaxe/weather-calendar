@@ -19,9 +19,10 @@ interface DayColumnProps {
   dayData: DayData;
   events: CalendarEvent[];
   isLoading?: boolean;
+  hasWeather?: boolean;
 }
 
-export default function DayColumn({ dayData, events, isLoading }: DayColumnProps) {
+export default function DayColumn({ dayData, events, isLoading, hasWeather }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -73,8 +74,8 @@ export default function DayColumn({ dayData, events, isLoading }: DayColumnProps
     <div
       className="day-column"
       ref={colRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onMouseMove={hasWeather ? handleMouseMove : undefined}
+      onMouseLeave={hasWeather ? handleMouseLeave : undefined}
     >
       <div
         className="day-column__gradient"
@@ -88,30 +89,31 @@ export default function DayColumn({ dayData, events, isLoading }: DayColumnProps
           <div key={i} className="day-column__gridline" style={{ top: i * HOUR_HEIGHT }} />
         ))}
 
-        {/* Weather condition overlays — one full-day texture per type */}
-        {weatherOverlays.map(({ type, intensities }) => {
-          const seed = daySeed * 100 + type.charCodeAt(0);
-          const tex = getDayTexture(type, intensities, seed);
-          return (
-            <div
-              key={`wx-${type}`}
-              className="wx-overlay"
-              style={{
-                top: 0,
-                height: TOTAL_HEIGHT,
-                backgroundImage: `url(${tex})`,
-                backgroundSize: '100% 100%',
-              }}
-            />
-          );
-        })}
+        {/* Weather condition overlays — only when weather data is loaded */}
+        {hasWeather &&
+          weatherOverlays.map(({ type, intensities }) => {
+            const seed = daySeed * 100 + type.charCodeAt(0);
+            const tex = getDayTexture(type, intensities, seed);
+            return (
+              <div
+                key={`wx-${type}`}
+                className="wx-overlay"
+                style={{
+                  top: 0,
+                  height: TOTAL_HEIGHT,
+                  backgroundImage: `url(${tex})`,
+                  backgroundSize: '100% 100%',
+                }}
+              />
+            );
+          })}
 
         {/* Loading shimmer — below events */}
         {isLoading && <div className="day-column__loading-shimmer" />}
 
-        {/* Sunrise / Sunset markers */}
-        <SunMarker hour={dayData.sunrise} type="sunrise" />
-        <SunMarker hour={dayData.sunset} type="sunset" />
+        {/* Sunrise / Sunset markers — only with weather */}
+        {hasWeather && <SunMarker hour={dayData.sunrise} type="sunrise" />}
+        {hasWeather && <SunMarker hour={dayData.sunset} type="sunset" />}
 
         {/* Now indicator */}
         <NowIndicator dayDate={dayData.date} />
@@ -124,8 +126,8 @@ export default function DayColumn({ dayData, events, isLoading }: DayColumnProps
           ))}
       </div>
 
-      {/* Tooltip */}
-      {tooltip && (
+      {/* Tooltip — only with weather */}
+      {hasWeather && tooltip && (
         <WeatherTooltip
           hourData={tooltip.hourData}
           hour={tooltip.hour}

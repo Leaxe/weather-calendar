@@ -12,6 +12,7 @@ interface FetchState {
 
 interface WeatherResult {
   data: DayData[];
+  hasWeather: boolean;
   isLoading: boolean;
   error: string | null;
 }
@@ -32,7 +33,7 @@ function makePlaceholderWeek(startDate: string): DayData[] {
       weatherCode: 0,
       windSpeed: 0,
     }));
-    return { date, dayName, sunrise: 6, sunset: 19, hourly };
+    return { date, dayName, sunrise: 0, sunset: 24, hourly };
   });
 }
 
@@ -78,16 +79,14 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
   }, [location, cacheKey, weekStartDate]);
 
   if (!location) {
-    return { data: [], isLoading: false, error: null };
+    return { data: makePlaceholderWeek(weekStartDate), hasWeather: false, isLoading: false, error: null };
   }
 
-  // If we have data for the current week, use it.
-  // If data is from a different week (stale) or null, show placeholders.
+  const hasCurrentData = !!(fetchState.data && fetchState.dataKey === cacheKey);
+
   return {
-    data:
-      fetchState.data && fetchState.dataKey === cacheKey
-        ? fetchState.data
-        : makePlaceholderWeek(weekStartDate),
+    data: hasCurrentData ? fetchState.data! : makePlaceholderWeek(weekStartDate),
+    hasWeather: hasCurrentData,
     isLoading: fetchState.isLoading,
     error: fetchState.error,
   };

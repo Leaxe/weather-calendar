@@ -3,20 +3,24 @@ import { todayStr } from '../utils/dateUtils';
 
 interface WeekHeaderProps {
   weekData: DayData[];
+  hasWeather?: boolean;
 }
 
-export default function WeekHeader({ weekData }: WeekHeaderProps) {
+export default function WeekHeader({ weekData, hasWeather }: WeekHeaderProps) {
   const today = todayStr();
 
   return (
     <div className="week-header">
       <div className="week-header__gutter" />
       {weekData.map((day, i) => {
-        const temps = day.hourly.map((h) => h.temp);
-        const high = Math.round(Math.max(...temps));
-        const low = Math.round(Math.min(...temps));
         const dateNum = new Date(day.date + 'T12:00:00').getDate();
         const isToday = day.date === today;
+
+        let tempRange: string | null = null;
+        if (hasWeather) {
+          const temps = day.hourly.map((h) => h.temp);
+          tempRange = `${Math.round(Math.max(...temps))}° / ${Math.round(Math.min(...temps))}°`;
+        }
 
         return (
           <div key={i} className="week-header__day">
@@ -28,9 +32,7 @@ export default function WeekHeader({ weekData }: WeekHeaderProps) {
             >
               {dateNum}
             </span>
-            <span className="week-header__temp-range">
-              {high}° / {low}°
-            </span>
+            {tempRange && <span className="week-header__temp-range">{tempRange}</span>}
           </div>
         );
       })}
