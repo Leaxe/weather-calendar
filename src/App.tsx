@@ -48,6 +48,7 @@ export default function App() {
     hasWeather: apiHasWeather,
     isLoading,
     error,
+    refresh: refreshWeather,
   } = useWeather(location, weekStartDate);
   const data = demoMode ? generateDemoWeek(weekStartDate) : apiData;
   const hasWeather = demoMode || apiHasWeather;
@@ -85,6 +86,8 @@ export default function App() {
                   location={location}
                   onSelect={setLocation}
                   onClear={() => setLocation(null)}
+                  onRefresh={refreshWeather}
+                  isRefreshing={isLoading}
                   iconOnly
                 />
               </div>
@@ -112,6 +115,8 @@ export default function App() {
               location={location}
               onSelect={setLocation}
               onClear={() => setLocation(null)}
+              onRefresh={refreshWeather}
+              isRefreshing={isLoading}
             />
           </header>
         )}
@@ -125,7 +130,6 @@ export default function App() {
         <WeekGrid
           weekData={data}
           events={events}
-          isLoading={isLoading}
           hasWeather={hasWeather}
           isMobile={isMobile}
         />

@@ -12,11 +12,28 @@
   border-right: none;
 }
 
-.gradient {
+.container {
   position: relative;
   width: 100%;
   overflow: hidden;
-  transition: background 1.5s ease-in-out;
+}
+
+.weatherGradient {
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes weatherFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.weatherVisible {
+  animation: weatherFadeIn 1.5s ease-in-out both;
+}
+
+.weatherHidden {
+  opacity: 0;
 }
 
 .gridline {
@@ -36,36 +53,9 @@
   right: 0;
   z-index: var(--z-night-overlay);
   pointer-events: none;
-  animation: fadeIn 1.5s ease-out;
 }
 
 /* ===== Loading Shimmer ===== */
-.loadingShimmer {
-  position: absolute;
-  inset: 0;
-  z-index: var(--z-loading-shimmer);
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.12) 40%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.12) 60%,
-    transparent 100%
-  );
-  background-size: 100% 300%;
-  animation: shimmer 2s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 0% 200%;
-  }
-  100% {
-    background-position: 0% -100%;
-  }
-}
-
 /* ===== Weather Condition Overlays ===== */
 .wxOverlay {
   position: absolute;
@@ -73,14 +63,4 @@
   right: 0;
   z-index: var(--z-weather-overlay);
   pointer-events: none;
-  animation: fadeIn 1.5s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }

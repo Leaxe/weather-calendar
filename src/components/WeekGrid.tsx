@@ -9,7 +9,6 @@ import styles from './WeekGrid.module.css';
 interface WeekGridProps {
   weekData: DayData[];
   events: CalendarEvent[];
-  isLoading?: boolean;
   hasWeather?: boolean;
   isMobile?: boolean;
   showHeader?: boolean;
@@ -18,7 +17,6 @@ interface WeekGridProps {
 export default function WeekGrid({
   weekData,
   events,
-  isLoading,
   hasWeather,
   isMobile,
   showHeader = true,
@@ -135,7 +133,6 @@ export default function WeekGrid({
               key={day.date}
               dayData={day}
               events={dayEvents}
-              isLoading={isLoading}
               hasWeather={hasWeather}
             />
           );

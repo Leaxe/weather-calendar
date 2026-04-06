@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { GeoLocation, DayData, HourlyData } from '../types';
 import { fetchWeekForecast } from '../services/weatherApi';
 import { addDays } from '../utils/dateUtils';
@@ -15,6 +15,7 @@ interface WeatherResult {
   hasWeather: boolean;
   isLoading: boolean;
   error: string | null;
+  refresh: () => void;
 }
 
 /**
@@ -27,7 +28,7 @@ function makePlaceholderWeek(startDate: string): DayData[] {
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
     const hourly: HourlyData[] = Array.from({ length: 24 }, (_, hour) => ({
       hour,
-      temp: 60,
+      temp: 20,
       cloudCover: 0,
       precipitation: 0,
       weatherCode: 0,
@@ -51,8 +52,12 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
     [location, weekStartDate],
   );
 
-  // Refresh every hour
+  // Refresh every hour, or manually
   const [refreshTick, setRefreshTick] = useState(0);
+  const refresh = useCallback(() => {
+    cacheRef.current = null;
+    setRefreshTick((t) => t + 1);
+  }, []);
   useEffect(() => {
     const id = setInterval(() => setRefreshTick((t) => t + 1), 60 * 60 * 1000);
     return () => clearInterval(id);
@@ -68,8 +73,9 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
       return;
     }
 
-    // Don't show loading indicator for background refreshes (when we already have data)
-    const isBackgroundRefresh = fetchState.data && fetchState.dataKey === cacheKey;
+    // Don't show loading indicator for background refreshes (when we already have data and cache is valid)
+    const isBackgroundRefresh =
+      fetchState.data && fetchState.dataKey === cacheKey && cacheRef.current;
     if (!isBackgroundRefresh) {
       setFetchState((prev) => ({ ...prev, isLoading: true, error: null }));
     }
@@ -96,6 +102,7 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
       hasWeather: false,
       isLoading: false,
       error: null,
+      refresh,
     };
   }
 
@@ -106,5 +113,6 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
     hasWeather: hasCurrentData,
     isLoading: fetchState.isLoading,
     error: fetchState.error,
+    refresh,
   };
 }

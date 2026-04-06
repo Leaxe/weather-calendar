@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { buildDayGradient, buildWeatherOverlays, getDarkness } from '../utils/gradientBuilder';
+import { weatherToColor } from '../utils/colorScale';
 import { useZoom } from '../contexts/ZoomContext';
 
 import { getDayTexture } from '../utils/noiseTextures';
@@ -21,17 +22,17 @@ interface TooltipState {
 interface DayColumnProps {
   dayData: DayData;
   events: CalendarEvent[];
-  isLoading?: boolean;
   hasWeather?: boolean;
 }
 
-export default function DayColumn({ dayData, events, isLoading, hasWeather }: DayColumnProps) {
+export default function DayColumn({ dayData, events, hasWeather }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
   const touchRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const isMobile = useIsMobile();
   const { totalHeight, hourHeight, pixelToHour } = useZoom();
 
+  const placeholderColor = useMemo(() => weatherToColor(20, 0), []);
   const gradient = useMemo(
     () => buildDayGradient(dayData.hourly, dayData.sunrise, dayData.sunset),
     [dayData],
@@ -178,18 +179,39 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
       onTouchEnd={hasWeather && isMobile ? handleTouchEnd : undefined}
     >
       <div
-        className={styles.gradient}
-        style={{
-          background: gradient,
-          height: totalHeight,
-        }}
+        className={styles.container}
+        style={{ height: totalHeight, background: placeholderColor }}
       >
+        {/* Temperature gradient — fades in */}
+        <div
+          className={`${styles.weatherGradient} ${hasWeather ? styles.weatherVisible : styles.weatherHidden}`}
+          style={{ background: gradient }}
+        />
+
+        {/* Weather condition overlays — fade in */}
+        {weatherOverlays.map(({ type, intensities }) => {
+          const seed = daySeed * 100 + type.charCodeAt(0);
+          const tex = getDayTexture(type, intensities, seed, hourHeight, colWidth);
+          return (
+            <div
+              key={`wx-${type}`}
+              className={`${styles.wxOverlay} ${hasWeather ? styles.weatherVisible : styles.weatherHidden}`}
+              style={{
+                top: 0,
+                height: totalHeight,
+                backgroundImage: `url(${tex})`,
+                backgroundSize: '100% 100%',
+              }}
+            />
+          );
+        })}
+
         {/* Hour gridlines */}
         {Array.from({ length: 24 }, (_, i) => (
           <div key={i} className={styles.gridline} style={{ top: i * hourHeight }} />
         ))}
 
-        {/* Event backgrounds (z:3) — below weather */}
+        {/* Event backgrounds (z:3) */}
         {timedEvents.map((event) => (
           <EventCardBackground
             key={`bg-${event.id}`}
@@ -198,32 +220,11 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
           />
         ))}
 
-        {/* Weather condition overlays (z:4) */}
-        {hasWeather &&
-          weatherOverlays.map(({ type, intensities }) => {
-            const seed = daySeed * 100 + type.charCodeAt(0);
-            const tex = getDayTexture(type, intensities, seed, hourHeight, colWidth);
-            return (
-              <div
-                key={`wx-${type}`}
-                className={styles.wxOverlay}
-                style={{
-                  top: 0,
-                  height: totalHeight,
-                  backgroundImage: `url(${tex})`,
-                  backgroundSize: '100% 100%',
-                }}
-              />
-            );
-          })}
-
-        {/* Night darkening (z:5) */}
-        {hasWeather && (
-          <div
-            className={styles.nightOverlay}
-            style={{ height: totalHeight, background: nightOverlay }}
-          />
-        )}
+        {/* Night darkening (z:5) — fades in */}
+        <div
+          className={`${styles.nightOverlay} ${hasWeather ? styles.weatherVisible : styles.weatherHidden}`}
+          style={{ height: totalHeight, background: nightOverlay }}
+        />
 
         {/* Sunrise / Sunset markers (z:6) */}
         {hasWeather && <SunMarker hour={dayData.sunrise} type="sunrise" />}
@@ -231,9 +232,6 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
 
         {/* Now indicator (z:7) */}
         <NowIndicator dayDate={dayData.date} />
-
-        {/* Loading shimmer (z:8) */}
-        {isLoading && <div className={styles.loadingShimmer} />}
 
         {/* Event labels (z:9) — above all weather effects */}
         {timedEvents.map((event) => (

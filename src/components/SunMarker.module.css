@@ -5,7 +5,6 @@
   right: 0;
   z-index: var(--z-sun-marker);
   pointer-events: none;
-  animation: fadeIn 1.5s ease-out;
 }
 
 .line {
@@ -31,15 +30,6 @@
   color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 @media (max-width: 767px) {

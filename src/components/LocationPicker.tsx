@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, X, RefreshCw } from 'lucide-react';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -17,10 +17,12 @@ interface LocationPickerProps {
   location: GeoLocation | null;
   onSelect: (loc: GeoLocation) => void;
   onClear: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   iconOnly?: boolean;
 }
 
-export default function LocationPicker({ location, onSelect, onClear, iconOnly }: LocationPickerProps) {
+export default function LocationPicker({ location, onSelect, onClear, onRefresh, isRefreshing, iconOnly }: LocationPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeoLocation[]>([]);
@@ -103,6 +105,15 @@ export default function LocationPicker({ location, onSelect, onClear, iconOnly }
       </Popover>
       {location && (
         <>
+          <div className="h-full w-px bg-border/50" />
+          <button
+            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh weather"
+          >
+            <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
           <div className="h-full w-px bg-border/50" />
           <button
             className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
