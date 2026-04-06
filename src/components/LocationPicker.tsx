@@ -68,7 +68,7 @@ export default function LocationPicker({ location, onSelect, onClear, iconOnly }
             {!iconOnly && label}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 border-white/10 bg-popover/80 p-0 backdrop-blur-xl" align="end" collisionPadding={12}>
+        <PopoverContent className="w-72 p-0" align="end" collisionPadding={12}>
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search city..."

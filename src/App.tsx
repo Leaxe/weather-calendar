@@ -1,7 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import WeekGrid from './components/WeekGrid';
 import LocationPicker from './components/LocationPicker';
-import DateNavigation from './components/DateNavigation';
 import DateRangePicker from './components/DateRangePicker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePersistedLocation } from './hooks/usePersistedLocation';
@@ -62,10 +61,6 @@ export default function App() {
     clearCalendar,
   } = useCalendarEvents(weekStartDate);
 
-  const handleDatePick = useCallback(
-    (date: Date) => setWeekStartDate(getSunday(date.toISOString().slice(0, 10))),
-    [setWeekStartDate],
-  );
 
   return (
     <ZoomProvider>
@@ -95,16 +90,14 @@ export default function App() {
               </div>
             </header>
             <div className={styles.mobileNav}>
-              <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
-              <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onSelect={handleDatePick} />
+              <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onChange={setWeekStartDate} />
             </div>
           </>
         ) : (
           <header className={styles.desktopHeader}>
             <Logo size={36} />
             <h1 className={styles.title}>Weather Calendar</h1>
-            <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
-            <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onSelect={handleDatePick} />
+            <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onChange={setWeekStartDate} />
             <div className={styles.spacer} />
             <CalendarImport
               source={calSource}
@@ -140,7 +133,7 @@ export default function App() {
         {/* Loading toast — floats over the calendar */}
         {isLoading && (
           <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center gap-2 rounded-full border border-white/[0.12] bg-[rgba(22,33,62,0.7)] px-4 py-2 shadow-lg backdrop-blur-[12px] saturate-[1.2]">
+            <div className="flex items-center gap-2 rounded-full border border-[--glass-border] bg-[--glass-bg] px-4 py-2 shadow-lg backdrop-blur-[12px] saturate-[1.2]">
               <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
               <span className="text-xs text-muted-foreground">Loading weather data...</span>
             </div>

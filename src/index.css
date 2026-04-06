@@ -68,6 +68,10 @@
   --border-color: rgba(255, 255, 255, 0.08);
   --border-color-strong: rgba(255, 255, 255, 0.15);
 
+  /* Glass theme */
+  --glass-bg: rgba(22, 33, 62, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.12);
+
   /* Calendar layout */
   --gutter-width: 60px;
   --header-height: 56px;
