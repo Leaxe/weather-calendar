@@ -1,6 +1,6 @@
 /* ===== Time Gutter ===== */
 .root {
-  width: var(--gutter-width);
+  width: var(--time-gutter-width);
   flex-shrink: 0;
   position: sticky;
   left: 0;

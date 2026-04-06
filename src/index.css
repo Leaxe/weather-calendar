@@ -71,7 +71,7 @@
   --glass-border: rgba(255, 255, 255, 0.12);
 
   /* Calendar layout */
-  --gutter-width: 60px;
+  --time-gutter-width: 60px;
   --day-header-height: 72px;
 
   /* Calendar z-index scale */
@@ -97,7 +97,7 @@ body,
 
 @media (max-width: 767px) {
   :root {
-    --gutter-width: 32px;
+    --time-gutter-width: 32px;
     --day-header-height: 52px;
   }
 }

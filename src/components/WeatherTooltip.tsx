@@ -1,7 +1,6 @@
 import { createPortal } from 'react-dom';
 import { formatHour } from '../utils/timeUtils';
 import { wmoConditionLabel, wmoConditionIcon } from '../utils/weatherConditions';
-import { useIsMobile } from '../hooks/useIsMobile';
 import type { HourlyData } from '../types';
 
 interface TooltipPosition {
@@ -26,7 +25,7 @@ export default function WeatherTooltip({
   sunset,
   position,
 }: WeatherTooltipProps) {
-  const isMobile = useIsMobile();
+  const isTouchOnly = !window.matchMedia('(hover: hover)').matches;
 
   if (!hourData) return null;
 
@@ -57,7 +56,7 @@ export default function WeatherTooltip({
     </>
   );
 
-  if (isMobile) {
+  if (isTouchOnly) {
     return createPortal(
       <div
         className="fixed bottom-0 left-0 right-0 z-50 border-t border-[--glass-border] bg-[--glass-bg] px-4 py-3 shadow-lg backdrop-blur-[12px] saturate-[1.2]"

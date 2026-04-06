@@ -9,7 +9,6 @@ import { EventCardBackground, EventCardLabel } from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
 import { computeEventLayout } from '../utils/eventLayout';
-import { useIsMobile } from '../hooks/useIsMobile';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
 import styles from './DayColumn.module.css';
 
@@ -29,7 +28,6 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
   const touchRef = useRef<{ x: number; y: number; time: number } | null>(null);
-  const isMobile = useIsMobile();
   const { totalHeight, hourHeight, pixelToHour } = useZoom();
 
   const placeholderColor = useMemo(() => weatherToColor(20, 0), []);
@@ -135,7 +133,7 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
 
   // Dismiss tooltip on any outside touch
   useEffect(() => {
-    if (!isMobile || !tooltip) return;
+    if (!tooltip) return;
     const dismiss = () => setTooltip(null);
     // Use a timeout so the current touch end doesn't immediately dismiss
     const timer = setTimeout(() => {
@@ -145,7 +143,7 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
       clearTimeout(timer);
       document.removeEventListener('touchstart', dismiss);
     };
-  }, [isMobile, tooltip]);
+  }, [tooltip]);
 
   // Track column width for texture rendering
   const [colWidth, setColWidth] = useState(200);
@@ -173,10 +171,10 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
     <div
       className={styles.root}
       ref={colRef}
-      onMouseMove={hasWeather && !isMobile ? handleMouseMove : undefined}
-      onMouseLeave={hasWeather && !isMobile ? handleMouseLeave : undefined}
-      onTouchStart={hasWeather && isMobile ? handleTouchStart : undefined}
-      onTouchEnd={hasWeather && isMobile ? handleTouchEnd : undefined}
+      onMouseMove={hasWeather ? handleMouseMove : undefined}
+      onMouseLeave={hasWeather ? handleMouseLeave : undefined}
+      onTouchStart={hasWeather ? handleTouchStart : undefined}
+      onTouchEnd={hasWeather ? handleTouchEnd : undefined}
     >
       <div
         className={styles.container}

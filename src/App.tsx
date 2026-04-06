@@ -65,68 +65,33 @@ export default function App() {
   return (
     <ZoomProvider>
       <div className={styles.root}>
-        {isMobile ? (
-          <>
-            <header className={styles.mobileHeader}>
-              <div className={styles.mobileLeft}>
-                <Logo size={28} />
-              </div>
-              <div className={styles.mobileRight}>
-                <CalendarImport
-                  source={calSource}
-                  isRefreshing={isRefreshing}
-                  onFileImport={importFromFile}
-                  onUrlImport={importFromUrl}
-                  onRefresh={refreshCalendar}
-                  onClear={clearCalendar}
-                  iconOnly
-                />
-                <LocationPicker
-                  location={location}
-                  onSelect={setLocation}
-                  onClear={() => setLocation(null)}
-                  onRefresh={refreshWeather}
-                  isRefreshing={isLoading}
-                  iconOnly
-                />
-              </div>
-            </header>
-            <div className={styles.mobileNav}>
-              <DateRangePicker
-                label={formatDateRange(weekStartDate, data)}
-                weekStartDate={weekStartDate}
-                onChange={setWeekStartDate}
-              />
-            </div>
-          </>
-        ) : (
-          <header className={styles.desktopHeader}>
-            <Logo size={36} />
-            <h1 className={styles.title}>Weather Calendar</h1>
-            <div className={styles.spacer} />
-            <DateRangePicker
-              label={formatDateRange(weekStartDate, data)}
-              weekStartDate={weekStartDate}
-              onChange={setWeekStartDate}
-            />
-            <CalendarImport
-              source={calSource}
-              isRefreshing={isRefreshing}
-              onFileImport={importFromFile}
-              onUrlImport={importFromUrl}
-              onRefresh={refreshCalendar}
-              onClear={clearCalendar}
-              iconOnly={!!calSource}
-            />
-            <LocationPicker
-              location={location}
-              onSelect={setLocation}
-              onClear={() => setLocation(null)}
-              onRefresh={refreshWeather}
-              isRefreshing={isLoading}
-            />
-          </header>
-        )}
+        <header className={styles.header}>
+          <Logo size={isMobile ? 28 : 36} />
+          {!isMobile && <h1 className={styles.title}>Weather Calendar</h1>}
+          <div className={styles.spacer} />
+          <DateRangePicker
+            label={formatDateRange(weekStartDate, data)}
+            weekStartDate={weekStartDate}
+            onChange={setWeekStartDate}
+          />
+          <CalendarImport
+            source={calSource}
+            isRefreshing={isRefreshing}
+            onFileImport={importFromFile}
+            onUrlImport={importFromUrl}
+            onRefresh={refreshCalendar}
+            onClear={clearCalendar}
+            iconOnly={isMobile || !!calSource}
+          />
+          <LocationPicker
+            location={location}
+            onSelect={setLocation}
+            onClear={() => setLocation(null)}
+            onRefresh={refreshWeather}
+            isRefreshing={isLoading}
+            iconOnly={isMobile}
+          />
+        </header>
 
         {error && (
           <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 py-1.5">

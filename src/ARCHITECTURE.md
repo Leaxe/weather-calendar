@@ -85,7 +85,7 @@ shadcn/ui components — owned source files, styled with Tailwind + CSS variable
 - `--bg`, `--text-primary`, `--text-secondary`, `--border-color` — base dark theme
 - `--glass-bg`, `--glass-border` — glassmorphism (popover, tooltip, header, toast)
 - `--z-event-bg` through `--z-now-indicator` — day column z-index scale
-- `--gutter-width`, `--day-header-height` — layout dimensions
+- `--time-gutter-width`, `--day-header-height` — layout dimensions
 - shadcn HSL variables (`--primary`, `--accent`, `--popover`, etc.)
 
 ### Approach

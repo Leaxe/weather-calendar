@@ -28,7 +28,7 @@ function makePlaceholderWeek(startDate: string): DayData[] {
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
     const hourly: HourlyData[] = Array.from({ length: 24 }, (_, hour) => ({
       hour,
-      temp: 20,
+      temp: 30,
       cloudCover: 0,
       precipitation: 0,
       weatherCode: 0,

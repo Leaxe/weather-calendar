@@ -6,8 +6,8 @@
   overflow: hidden;
 }
 
-/* ===== Desktop Header — single row ===== */
-.desktopHeader {
+/* ===== Header ===== */
+.header {
   display: flex;
   align-items: center;
   padding: 10px 20px;
@@ -18,16 +18,10 @@
   gap: 12px;
 }
 
-.desktopHeader .title {
+.title {
   font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.3px;
-  white-space: nowrap;
-}
-
-.desktopHeader .subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -35,44 +29,9 @@
   flex: 1;
 }
 
-/* ===== Mobile Header — two rows ===== */
-.mobileHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  background: rgba(22, 33, 62, 0.7);
-  backdrop-filter: blur(12px) saturate(1.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  flex-shrink: 0;
-}
-
-.mobileLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mobileRight {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.mobileNav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  background: rgba(22, 33, 62, 0.7);
-  backdrop-filter: blur(12px) saturate(1.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  flex-shrink: 0;
-  gap: 8px;
-}
-
-.mobileNav .subtitle {
-  font-size: 11px;
-  color: var(--text-secondary);
-  white-space: nowrap;
+@media (max-width: 767px) {
+  .header {
+    padding: 8px 10px;
+    gap: 8px;
+  }
 }
