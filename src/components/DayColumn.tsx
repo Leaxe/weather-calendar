@@ -146,6 +146,19 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
     };
   }, [isMobile, tooltip]);
 
+  // Track column width for texture rendering
+  const [colWidth, setColWidth] = useState(200);
+  useEffect(() => {
+    const el = colRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.round(entries[0].contentRect.width);
+      if (w > 0) setColWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Derive a stable seed from the date string
   const daySeed = useMemo(() => {
     let hash = 0;
@@ -189,7 +202,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
         {hasWeather &&
           weatherOverlays.map(({ type, intensities }) => {
             const seed = daySeed * 100 + type.charCodeAt(0);
-            const tex = getDayTexture(type, intensities, seed, hourHeight);
+            const tex = getDayTexture(type, intensities, seed, hourHeight, colWidth);
             return (
               <div
                 key={`wx-${type}`}

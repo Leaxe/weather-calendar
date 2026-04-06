@@ -172,6 +172,27 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
     }
   }
 
+  // Bleed precipitation into neighboring dry hours for natural transitions
+  function hasPrecip(i: number): boolean {
+    return rain[i] > 0 || snow[i] > 0 || freezingRain[i] > 0;
+  }
+  for (let i = 0; i < 24; i++) {
+    if (!hasPrecip(i)) continue;
+    const bleed = 0.15;
+    if (i > 0 && !hasPrecip(i - 1)) {
+      const amount = (rain[i] || snow[i] || freezingRain[i]) * bleed;
+      if (rain[i] > 0) rain[i - 1] = amount;
+      else if (snow[i] > 0) snow[i - 1] = amount;
+      else freezingRain[i - 1] = amount;
+    }
+    if (i < 23 && !hasPrecip(i + 1)) {
+      const amount = (rain[i] || snow[i] || freezingRain[i]) * bleed;
+      if (rain[i] > 0) rain[i + 1] = amount;
+      else if (snow[i] > 0) snow[i + 1] = amount;
+      else freezingRain[i + 1] = amount;
+    }
+  }
+
   const results: WeatherOverlay[] = [];
   if (cloud.some((v) => v > 0)) results.push({ type: 'cloud', intensities: Array.from(cloud) });
   if (rain.some((v) => v > 0)) results.push({ type: 'rain', intensities: Array.from(rain) });

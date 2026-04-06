@@ -86,14 +86,14 @@ const configs: Configs = {
     blur: 0.15,
   },
   rain: {
-    densityPerHour: 40,
-    minLength: 6,
-    maxLength: 14,
-    strokeWidth: 1.5,
+    densityPerHour: 60,
+    minLength: 8,
+    maxLength: 18,
+    strokeWidth: 1.8,
     angle: -78,
     color: '#c0d8ff',
-    minAlpha: 0.3,
-    maxAlpha: 0.7,
+    minAlpha: 0.4,
+    maxAlpha: 0.85,
   },
   freezing_rain: {
     densityPerHour: 35,
@@ -107,8 +107,8 @@ const configs: Configs = {
   },
   snow: {
     densityPerHour: 80,
-    minRadius: 1.0,
-    maxRadius: 3.0,
+    minRadius: 0.8,
+    maxRadius: 2.4,
     color: '#ffffff',
     minAlpha: 0.25,
     maxAlpha: 0.65,
@@ -118,13 +118,17 @@ const configs: Configs = {
 
 /**
  * Sample the intensity curve at a given pixel y-position.
+ * Uses smoothstep interpolation for natural transitions between hours.
  */
 function sampleIntensity(intensities: number[], y: number, hourPx: number): number {
-  const hour = y / hourPx;
+  // Center intensity within each hour block rather than anchoring at the top
+  const hour = y / hourPx - 0.5;
   const lo = Math.max(0, Math.min(23, Math.floor(hour)));
   const hi = Math.min(23, lo + 1);
   const frac = hour - lo;
-  return intensities[lo] * (1 - frac) + intensities[hi] * frac;
+  // Smoothstep for more natural transitions (holds values longer, transitions faster)
+  const t = frac * frac * (3 - 2 * frac);
+  return intensities[lo] * (1 - t) + intensities[hi] * t;
 }
 
 interface GenerateTextureParams {
@@ -153,8 +157,9 @@ export function generateDayTexture({
   const ctx = canvas.getContext('2d')!;
   const rand = mulberry32(seed);
 
-  // Scale density proportionally to zoom so element count per visual area stays constant
-  const densityScale = hourPx / BASE_HOUR_PX;
+  // Scale density proportionally to zoom and width so element count per visual area stays constant
+  const BASE_WIDTH = 200;
+  const densityScale = (hourPx / BASE_HOUR_PX) * (width / BASE_WIDTH);
 
   if (type === 'rain' || type === 'freezing_rain') {
     drawRain(ctx, rand, width, intensities, hourPx, dayHeight, densityScale, type);
@@ -189,7 +194,7 @@ function drawClouds(
 
       for (let i = 0; i < count; i++) {
         const x = rand() * width;
-        const y = hour * hourPx + (rand() - 0.2) * hourPx * 1.4;
+        const y = hour * hourPx + rand() * hourPx;
         // Shrink blobs at high intensity for more uniform coverage
         const sizeScale = 1 - intensity * 0.3;
         const rx = (cfg.minRadius + rand() * (cfg.maxRadius - cfg.minRadius)) * sizeScale;
@@ -242,27 +247,46 @@ function drawRain(
   for (let hour = 0; hour < 24; hour++) {
     const intensity = intensities[hour];
     if (intensity <= 0) continue;
-    const count = Math.ceil(cfg.densityPerHour * intensity * densityScale);
+    // Heavier rain gets disproportionately more drops
+    const densityBoost = 1 + intensity * intensity * 3;
+    const count = Math.ceil(cfg.densityPerHour * intensity * densityScale * densityBoost);
 
     for (let i = 0; i < count; i++) {
       const x = rand() * width;
       const y = hour * hourPx + rand() * hourPx;
       const localIntensity = sampleIntensity(intensities, y, hourPx);
-      const len = cfg.minLength + rand() * (cfg.maxLength - cfg.minLength);
+      // Heavier rain = longer, thicker drops
+      const intensityStretch = 1 + localIntensity * 0.5;
+      const len = (cfg.minLength + rand() * (cfg.maxLength - cfg.minLength)) * intensityStretch;
       const alpha = (cfg.minAlpha + rand() * (cfg.maxAlpha - cfg.minAlpha)) * localIntensity;
 
       const dx = Math.cos(angleRad) * len;
       const dy = Math.sin(angleRad) * len;
 
+      // Gradient trail: transparent at top, opaque at bottom
+      const grad = ctx.createLinearGradient(x, y, x + dx, y - dy);
+      grad.addColorStop(0, `rgba(192, 216, 255, 0)`);
+      grad.addColorStop(0.3, `rgba(192, 216, 255, ${alpha * 0.4})`);
+      grad.addColorStop(1, `rgba(192, 216, 255, ${alpha})`);
+
       ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = cfg.color;
+      ctx.strokeStyle = grad;
       ctx.lineWidth = cfg.strokeWidth;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + dx, y - dy);
+      ctx.moveTo(x + dx, y - dy);
+      ctx.lineTo(x, y);
       ctx.stroke();
+
+      // Small splash dot at the bottom of some drops
+      if (rand() < 0.25) {
+        ctx.globalAlpha = alpha * 0.4;
+        ctx.fillStyle = cfg.color;
+        ctx.beginPath();
+        ctx.arc(x, y, cfg.strokeWidth * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.restore();
     }
   }
@@ -298,7 +322,10 @@ function drawSnow(
       ctx.lineWidth = 0.6;
       ctx.translate(x, y);
 
-      if (r > 1.8) {
+      if (r > 2.2) {
+        // Large snowflakes: 6-armed crystal with glow
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+        ctx.shadowBlur = r * 1.5;
         const arms = 6;
         const rotation = rand() * Math.PI;
         for (let a = 0; a < arms; a++) {
@@ -329,10 +356,25 @@ function drawSnow(
           );
           ctx.stroke();
         }
+        ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.arc(0, 0, 0.5, 0, Math.PI * 2);
         ctx.fill();
+      } else if (r > 1.4) {
+        // Medium snowflakes: simple 4-armed cross with subtle glow
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+        ctx.shadowBlur = r;
+        const rotation = rand() * Math.PI;
+        for (let a = 0; a < 4; a++) {
+          const angle = rotation + (a * Math.PI) / 2;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(angle) * r * 1.3, Math.sin(angle) * r * 1.3);
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
       } else {
+        // Small snowflakes: soft dots
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
@@ -368,11 +410,15 @@ export function getDayTexture(
   intensities: number[],
   seed: number,
   hourPx: number,
+  width = 200,
 ): string {
   const roundedPx = Math.round(hourPx / 10) * 10;
-  const key = `${type}-${seed}-${roundedPx}-${intensities.map((v) => v.toFixed(2)).join(',')}`;
+  const key = `${type}-${seed}-${roundedPx}-${width}-${intensities.map((v) => v.toFixed(2)).join(',')}`;
   if (!textureCache.has(key)) {
-    textureCache.set(key, generateDayTexture({ type, intensities, seed, hourPx: roundedPx }));
+    textureCache.set(
+      key,
+      generateDayTexture({ type, intensities, seed, hourPx: roundedPx, width }),
+    );
   }
   return textureCache.get(key)!;
 }
