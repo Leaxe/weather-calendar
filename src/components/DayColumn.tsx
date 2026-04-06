@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { buildDayGradient, buildWeatherOverlays, getDarkness } from '../utils/gradientBuilder';
 import { useZoom } from '../contexts/ZoomContext';
 
@@ -8,6 +8,7 @@ import { EventCardBackground, EventCardLabel } from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
 import { computeEventLayout } from '../utils/eventLayout';
+import { useIsMobile } from '../hooks/useIsMobile';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
 import styles from './DayColumn.module.css';
 
@@ -27,6 +28,8 @@ interface DayColumnProps {
 export default function DayColumn({ dayData, events, isLoading, hasWeather }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
+  const touchRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const isMobile = useIsMobile();
   const { totalHeight, hourHeight, pixelToHour } = useZoom();
 
   const gradient = useMemo(
@@ -87,6 +90,62 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
     setTooltip(null);
   }, []);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0];
+    touchRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (!touchRef.current || !colRef.current) return;
+      const touch = e.changedTouches[0];
+      const dt = Date.now() - touchRef.current.time;
+      const dx = Math.abs(touch.clientX - touchRef.current.x);
+      const dy = Math.abs(touch.clientY - touchRef.current.y);
+      touchRef.current = null;
+
+      if (dt > 300 || dx > 10 || dy > 10) return;
+
+      // If tooltip is already showing, dismiss it
+      if (tooltip) {
+        setTooltip(null);
+        return;
+      }
+
+      const rect = colRef.current.getBoundingClientRect();
+      const gradientY = touch.clientY - rect.top;
+      const hour = pixelToHour(gradientY);
+      const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
+      const hourData = dayData.hourly[hourIndex];
+
+      setTooltip({
+        hourData,
+        hour,
+        position: {
+          x: touch.clientX,
+          y: touch.clientY,
+          flipX: false,
+          flipY: false,
+        },
+      });
+    },
+    [dayData, pixelToHour, tooltip],
+  );
+
+  // Dismiss tooltip on any outside touch
+  useEffect(() => {
+    if (!isMobile || !tooltip) return;
+    const dismiss = () => setTooltip(null);
+    // Use a timeout so the current touch end doesn't immediately dismiss
+    const timer = setTimeout(() => {
+      document.addEventListener('touchstart', dismiss, { once: true });
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('touchstart', dismiss);
+    };
+  }, [isMobile, tooltip]);
+
   // Derive a stable seed from the date string
   const daySeed = useMemo(() => {
     let hash = 0;
@@ -100,8 +159,10 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
     <div
       className={styles.root}
       ref={colRef}
-      onMouseMove={hasWeather ? handleMouseMove : undefined}
-      onMouseLeave={hasWeather ? handleMouseLeave : undefined}
+      onMouseMove={hasWeather && !isMobile ? handleMouseMove : undefined}
+      onMouseLeave={hasWeather && !isMobile ? handleMouseLeave : undefined}
+      onTouchStart={hasWeather && isMobile ? handleTouchStart : undefined}
+      onTouchEnd={hasWeather && isMobile ? handleTouchEnd : undefined}
     >
       <div
         className={styles.gradient}

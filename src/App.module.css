@@ -2,41 +2,74 @@
 .root {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
-/* ===== App Header ===== */
-.header {
+/* ===== Desktop Header — single row ===== */
+.desktopHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
+  padding: 10px 20px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
-  height: var(--header-height);
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
-.headerRight {
+.desktopHeader .title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.desktopHeader .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ===== Mobile Header — two rows ===== */
+.mobileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.mobileLeft {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.headerTitle {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
+.mobileRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.headerSubtitle {
-  font-size: 14px;
+.mobileNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.mobileNav .subtitle {
+  font-size: 11px;
   color: var(--text-secondary);
+  white-space: nowrap;
 }

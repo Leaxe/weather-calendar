@@ -10,11 +10,19 @@ interface WeekGridProps {
   events: CalendarEvent[];
   isLoading?: boolean;
   hasWeather?: boolean;
+  isMobile?: boolean;
 }
 
-export default function WeekGrid({ weekData, events, isLoading, hasWeather }: WeekGridProps) {
+export default function WeekGrid({
+  weekData,
+  events,
+  isLoading,
+  hasWeather,
+  isMobile,
+}: WeekGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { hourHeight, setHourHeight } = useZoom();
+  const pinchRef = useRef<{ startDist: number; startHeight: number } | null>(null);
 
   // Auto-scroll to ~7 AM on mount
   useEffect(() => {
@@ -55,6 +63,62 @@ export default function WeekGrid({ weekData, events, isLoading, hasWeather }: We
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
+
+  // Pinch-to-zoom for touch devices
+  const handleTouchStart = useCallback(
+    (e: TouchEvent) => {
+      if (e.touches.length !== 2) return;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchRef.current = {
+        startDist: Math.hypot(dx, dy),
+        startHeight: hourHeight,
+      };
+    },
+    [hourHeight],
+  );
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (e.touches.length !== 2 || !pinchRef.current) return;
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const currentDist = Math.hypot(dx, dy);
+      const scale = currentDist / pinchRef.current.startDist;
+      const newHeight = Math.max(30, Math.min(150, pinchRef.current.startHeight * scale));
+
+      const container = scrollRef.current!;
+      const rect = container.getBoundingClientRect();
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+      const hourAtMid = (container.scrollTop + midY) / hourHeight;
+
+      setHourHeight(newHeight);
+
+      requestAnimationFrame(() => {
+        container.scrollTop = hourAtMid * newHeight - midY;
+      });
+    },
+    [hourHeight, setHourHeight],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    pinchRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobile, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
     <div className={styles.root} ref={scrollRef}>

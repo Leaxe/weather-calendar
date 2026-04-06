@@ -22,3 +22,12 @@
   transform: translateY(-6px);
   white-space: nowrap;
 }
+
+@media (max-width: 767px) {
+  .label {
+    padding-right: 3px;
+  }
+  .label span {
+    font-size: 8px;
+  }
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Command,
@@ -17,9 +17,10 @@ interface LocationPickerProps {
   location: GeoLocation | null;
   onSelect: (loc: GeoLocation) => void;
   onClear: () => void;
+  iconOnly?: boolean;
 }
 
-export default function LocationPicker({ location, onSelect, onClear }: LocationPickerProps) {
+export default function LocationPicker({ location, onSelect, onClear, iconOnly }: LocationPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeoLocation[]>([]);
@@ -59,15 +60,15 @@ export default function LocationPicker({ location, onSelect, onClear }: Location
     : 'Select Location';
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center overflow-hidden rounded-md border border-border/50">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
-            <MapPin className="h-3.5 w-3.5" />
-            {label}
-          </Button>
+          <button className={`flex h-8 cursor-pointer items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'}`}>
+            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+            {!iconOnly && label}
+          </button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="end">
+        <PopoverContent className="w-72 p-0" align="end" collisionPadding={12}>
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search city..."
@@ -101,15 +102,16 @@ export default function LocationPicker({ location, onSelect, onClear }: Location
         </PopoverContent>
       </Popover>
       {location && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          onClick={onClear}
-          aria-label="Clear location"
-        >
-          <X className="h-3 w-3" />
-        </Button>
+        <>
+          <div className="h-full w-px bg-border/50" />
+          <button
+            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            onClick={onClear}
+            aria-label="Clear location"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </>
       )}
     </div>
   );

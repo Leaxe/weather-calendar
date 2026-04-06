@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePersistedLocation } from './hooks/usePersistedLocation';
 import { useWeather } from './hooks/useWeather';
 import { useCalendarEvents } from './hooks/useCalendarEvents';
+import { useIsMobile } from './hooks/useIsMobile';
 import CalendarImport from './components/CalendarImport';
 import Logo from './components/Logo';
 import { generateDemoWeek } from './data/demoWeather';
@@ -39,6 +40,7 @@ function formatDateRange(startDate: string, data: { date: string }[]): string {
 }
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [location, setLocation] = usePersistedLocation();
   const [weekStartDate, setWeekStartDate] = useState(() => getSunday(todayStr()));
   const [demoMode] = useState(false);
@@ -63,14 +65,42 @@ export default function App() {
   return (
     <ZoomProvider>
       <div className={styles.root}>
-        <header className={styles.header}>
-          <div className={styles.headerLeft}>
+        {isMobile ? (
+          <>
+            <header className={styles.mobileHeader}>
+              <div className={styles.mobileLeft}>
+                <Logo size={28} />
+              </div>
+              <div className={styles.mobileRight}>
+                <CalendarImport
+                  source={calSource}
+                  isRefreshing={isRefreshing}
+                  onFileImport={importFromFile}
+                  onUrlImport={importFromUrl}
+                  onRefresh={refreshCalendar}
+                  onClear={clearCalendar}
+                  iconOnly
+                />
+                <LocationPicker
+                  location={location}
+                  onSelect={setLocation}
+                  onClear={() => setLocation(null)}
+                  iconOnly
+                />
+              </div>
+            </header>
+            <div className={styles.mobileNav}>
+              <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
+              <span className={styles.subtitle}>{formatDateRange(weekStartDate, data)}</span>
+            </div>
+          </>
+        ) : (
+          <header className={styles.desktopHeader}>
             <Logo size={36} />
-            <h1 className={styles.headerTitle}>Weather Calendar</h1>
+            <h1 className={styles.title}>Weather Calendar</h1>
             <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
-            <span className={styles.headerSubtitle}>{formatDateRange(weekStartDate, data)}</span>
-          </div>
-          <div className={styles.headerRight}>
+            <span className={styles.subtitle}>{formatDateRange(weekStartDate, data)}</span>
+            <div className={styles.spacer} />
             <CalendarImport
               source={calSource}
               isRefreshing={isRefreshing}
@@ -78,14 +108,15 @@ export default function App() {
               onUrlImport={importFromUrl}
               onRefresh={refreshCalendar}
               onClear={clearCalendar}
+              iconOnly={!!calSource}
             />
             <LocationPicker
               location={location}
               onSelect={setLocation}
               onClear={() => setLocation(null)}
             />
-          </div>
-        </header>
+          </header>
+        )}
 
         {error && (
           <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 py-1.5">
@@ -94,7 +125,13 @@ export default function App() {
         )}
 
         <WeekHeader weekData={data} hasWeather={hasWeather} />
-        <WeekGrid weekData={data} events={events} isLoading={isLoading} hasWeather={hasWeather} />
+        <WeekGrid
+          weekData={data}
+          events={events}
+          isLoading={isLoading}
+          hasWeather={hasWeather}
+          isMobile={isMobile}
+        />
 
         {/* Loading toast — floats over the calendar */}
         {isLoading && (

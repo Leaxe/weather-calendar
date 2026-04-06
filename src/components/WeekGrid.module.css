@@ -3,6 +3,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  touch-action: pan-y;
 }
 
 .body {

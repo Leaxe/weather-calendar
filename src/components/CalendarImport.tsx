@@ -12,6 +12,7 @@ interface CalendarImportProps {
   onUrlImport: (url: string) => Promise<void>;
   onRefresh: () => void;
   onClear: () => void;
+  iconOnly?: boolean;
 }
 
 export default function CalendarImport({
@@ -21,6 +22,7 @@ export default function CalendarImport({
   onUrlImport,
   onRefresh,
   onClear,
+  iconOnly,
 }: CalendarImportProps) {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
@@ -79,15 +81,21 @@ export default function CalendarImport({
     : 'Select Calendar';
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center overflow-hidden rounded-md border border-border/50">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
-            <Calendar className="h-3.5 w-3.5" />
-            {label}
-          </Button>
+          <button
+            className={`flex items-center ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'} h-8 cursor-pointer text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground`}
+          >
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+            {!iconOnly && label}
+          </button>
         </PopoverTrigger>
-        <PopoverContent className="w-80" align="end">
+        <PopoverContent
+          className="w-[min(320px,calc(100vw-24px))]"
+          align="end"
+          collisionPadding={12}
+        >
           <div className="space-y-3">
             <div className="text-sm font-medium">Import Calendar</div>
 
@@ -149,25 +157,23 @@ export default function CalendarImport({
       </Popover>
       {source && (
         <>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
+          <div className="h-full w-px bg-border/50" />
+          <button
+            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
             onClick={onRefresh}
             disabled={isRefreshing}
             aria-label="Refresh calendar"
           >
             <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
+          </button>
+          <div className="h-full w-px bg-border/50" />
+          <button
+            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             onClick={onClear}
             aria-label="Disconnect calendar"
           >
             <X className="h-3 w-3" />
-          </Button>
+          </button>
         </>
       )}
     </div>

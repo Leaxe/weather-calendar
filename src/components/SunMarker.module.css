@@ -41,3 +41,10 @@
     opacity: 1;
   }
 }
+
+@media (max-width: 767px) {
+  .label {
+    font-size: 7px;
+    right: 2px;
+  }
+}
