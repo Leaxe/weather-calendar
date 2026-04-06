@@ -60,7 +60,7 @@ export default function WeatherTooltip({
   if (isMobile) {
     return createPortal(
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-popover/95 px-4 py-3 shadow-lg backdrop-blur-md"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.12] bg-[rgba(22,33,62,0.7)] px-4 py-3 shadow-lg backdrop-blur-[12px] saturate-[1.2]"
         style={{ textAlign: 'center' }}
       >
         {content}
@@ -71,7 +71,7 @@ export default function WeatherTooltip({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed z-50 min-w-[140px] rounded-lg border border-border/50 bg-popover/95 px-3.5 py-2.5 shadow-lg backdrop-blur-md"
+      className="pointer-events-none fixed z-50 min-w-[140px] rounded-lg border border-white/[0.12] bg-[rgba(22,33,62,0.7)] px-3.5 py-2.5 shadow-lg backdrop-blur-[12px] saturate-[1.2]"
       style={{
         top: position.y,
         ...(position.flipX ? { right: window.innerWidth - position.x } : { left: position.x }),

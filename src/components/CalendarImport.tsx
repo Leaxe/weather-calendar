@@ -81,7 +81,7 @@ export default function CalendarImport({
     : 'Select Calendar';
 
   return (
-    <div className="flex items-center overflow-hidden rounded-md border border-border/50">
+    <div className="flex items-center overflow-hidden rounded-md border border-white/10 bg-white/5 backdrop-blur-sm">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
@@ -92,7 +92,7 @@ export default function CalendarImport({
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[min(320px,calc(100vw-24px))]"
+          className="w-[min(320px,calc(100vw-24px))] border-white/10 bg-popover/80 backdrop-blur-xl"
           align="end"
           collisionPadding={12}
         >

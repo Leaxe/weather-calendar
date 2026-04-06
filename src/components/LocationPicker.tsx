@@ -60,7 +60,7 @@ export default function LocationPicker({ location, onSelect, onClear, iconOnly }
     : 'Select Location';
 
   return (
-    <div className="flex items-center overflow-hidden rounded-md border border-border/50">
+    <div className="flex items-center overflow-hidden rounded-md border border-white/10 bg-white/5 backdrop-blur-sm">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button className={`flex h-8 cursor-pointer items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'}`}>
@@ -68,7 +68,7 @@ export default function LocationPicker({ location, onSelect, onClear, iconOnly }
             {!iconOnly && label}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="end" collisionPadding={12}>
+        <PopoverContent className="w-72 border-white/10 bg-popover/80 p-0 backdrop-blur-xl" align="end" collisionPadding={12}>
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search city..."

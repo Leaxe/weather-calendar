@@ -2,10 +2,13 @@
 .root {
   display: flex;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color-strong);
-  background: var(--bg-surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(22, 33, 62, 0.7);
+  backdrop-filter: blur(12px) saturate(1.2);
   height: var(--day-header-height);
-  padding-right: 8px; /* match scrollbar width */
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .gutter {
@@ -20,9 +23,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0;
   border-right: 1px solid var(--border-color);
-  padding: 8px 4px;
+  padding: 4px 4px;
 }
 
 .day:last-child {
@@ -37,27 +40,24 @@
   color: var(--text-secondary);
 }
 
-.date {
-  font-size: 22px;
-  font-weight: 300;
-  line-height: 1.1;
-}
-
+.date,
 .dateToday {
   font-size: 22px;
   font-weight: 300;
   line-height: 1;
-  background: #4285f4;
-  color: white;
-  border-radius: 50%;
-  min-width: 32px;
-  min-height: 32px;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.dateToday {
+  background: #4285f4;
+  border: 1px solid #5a9bf6;
+  color: white;
 }
 
 .tempRange {
@@ -66,22 +66,15 @@
 }
 
 @media (max-width: 767px) {
-  .root {
-    padding-right: 0;
-  }
   .dayName {
     font-size: 9px;
     letter-spacing: 0.3px;
   }
-  .date {
-    font-size: 16px;
-  }
+  .date,
   .dateToday {
     font-size: 16px;
-    min-width: 26px;
-    min-height: 26px;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
   }
   .tempRange {
     font-size: 9px;

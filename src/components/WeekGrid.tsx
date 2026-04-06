@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import TimeGutter from './TimeGutter';
 import DayColumn from './DayColumn';
+import WeekHeader from './WeekHeader';
 import { useZoom } from '../contexts/ZoomContext';
 import type { DayData, CalendarEvent } from '../types';
 import styles from './WeekGrid.module.css';
@@ -11,6 +12,7 @@ interface WeekGridProps {
   isLoading?: boolean;
   hasWeather?: boolean;
   isMobile?: boolean;
+  showHeader?: boolean;
 }
 
 export default function WeekGrid({
@@ -19,6 +21,7 @@ export default function WeekGrid({
   isLoading,
   hasWeather,
   isMobile,
+  showHeader = true,
 }: WeekGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { hourHeight, setHourHeight } = useZoom();
@@ -122,6 +125,7 @@ export default function WeekGrid({
 
   return (
     <div className={styles.root} ref={scrollRef}>
+      {showHeader && <WeekHeader weekData={weekData} hasWeather={hasWeather} />}
       <div className={styles.body}>
         <TimeGutter />
         {weekData.map((day) => {
