@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { addDays, getSunday, todayStr } from '../utils/dateUtils';
+import { addDays, getSunday, todayStr, toLocalDateStr } from '../utils/dateUtils';
 
 interface DateRangePickerProps {
   label: string;
@@ -28,10 +28,32 @@ export default function DateRangePicker({
 
   const midWeek = new Date(addDays(weekStartDate, 3) + 'T12:00:00');
 
+  // Last allowed week start: the Sunday of the week containing the last forecast day
+  const maxWeekStart = getSunday(addDays(today, 16));
+  const maxSaturday = new Date(addDays(maxWeekStart, 6) + 'T12:00:00');
+
+  // Highlight the currently selected week (Sun–Sat)
+  const selectedRange = useMemo(() => {
+    const from = new Date(weekStartDate + 'T12:00:00');
+    const to = new Date(addDays(weekStartDate, 6) + 'T12:00:00');
+    return { from, to };
+  }, [weekStartDate]);
+
+  // Disable days whose week extends past the forecast
+  const disabledMatcher = useCallback(
+    (date: Date) => {
+      const dateStr = toLocalDateStr(date);
+      const weekEnd = addDays(getSunday(dateStr), 6);
+      return weekEnd > addDays(maxWeekStart, 6);
+    },
+    [maxWeekStart],
+  );
+
   const handleSelect = useCallback(
     (date: Date | undefined) => {
       if (date) {
-        onChange(getSunday(date.toISOString().slice(0, 10)));
+        const dateStr = toLocalDateStr(date);
+        onChange(getSunday(dateStr));
         setOpen(false);
       }
     },
@@ -44,20 +66,20 @@ export default function DateRangePicker({
   }, [onChange, currentWeekStart]);
 
   return (
-    <div className="flex items-center overflow-hidden rounded-md border border-white/10">
+    <div className="flex items-center overflow-hidden rounded-md border border-white/10 bg-white/5 backdrop-blur-sm">
       <button
-        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-white/10 hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
         disabled={disabled}
         onClick={() => onChange(addDays(weekStartDate, -7))}
         aria-label="Previous week"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
-      <div className="h-full w-px bg-white/10" />
+      <div className="h-full w-px bg-border/50" />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
-            className="flex h-8 cursor-pointer items-center px-3 text-xs text-muted-foreground transition-colors hover:bg-white/10 hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="flex h-8 cursor-pointer items-center px-3 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
             disabled={disabled}
           >
             {label}
@@ -65,12 +87,14 @@ export default function DateRangePicker({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">
           <Calendar
-            mode="single"
-            selected={midWeek}
-            onSelect={handleSelect}
+            mode="range"
+            selected={selectedRange}
+            onDayClick={(day) => handleSelect(day)}
             defaultMonth={midWeek}
+            disabled={disabledMatcher}
+            endMonth={maxSaturday}
             footer={
-              <div className="border-t border-white/10 p-2">
+              <div className="-mx-3 -mb-3 border-t border-white/10 p-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -85,9 +109,9 @@ export default function DateRangePicker({
           />
         </PopoverContent>
       </Popover>
-      <div className="h-full w-px bg-white/10" />
+      <div className="h-full w-px bg-border/50" />
       <button
-        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-white/10 hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
         disabled={disabled || isForwardDisabled}
         onClick={() => onChange(nextWeekStart)}
         aria-label="Next week"
