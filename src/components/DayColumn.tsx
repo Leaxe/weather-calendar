@@ -7,8 +7,12 @@ import { getDayTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
 import { EventCardBackground, EventCardLabel } from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
+import EventWeatherTooltip from './EventWeatherTooltip';
 import NowIndicator from './NowIndicator';
+import GhostEvent from './GhostEvent';
 import { computeEventLayout } from '../utils/eventLayout';
+import { aggregateWeatherRange } from '../utils/weatherAggregation';
+import { useDragSelection } from '../hooks/useDragSelection';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
 import styles from './DayColumn.module.css';
 
@@ -24,8 +28,17 @@ interface DayColumnProps {
   hasWeather?: boolean;
 }
 
+interface HoveredEventState {
+  event: CalendarEvent;
+  hourData: HourlyData;
+  hour: number;
+  position: { x: number; y: number; flipX: boolean; flipY: boolean };
+}
+
 export default function DayColumn({ dayData, events, hasWeather }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [hoveredEvent, setHoveredEvent] = useState<HoveredEventState | null>(null);
+  const suppressTooltipRef = useRef(false);
   const colRef = useRef<HTMLDivElement>(null);
   const touchRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const { totalHeight, hourHeight, pixelToHour } = useZoom();
@@ -39,6 +52,115 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
   const weatherOverlays = useMemo(() => buildWeatherOverlays(dayData.hourly), [dayData]);
   const timedEvents = useMemo(() => events.filter((e) => !e.isAllDay), [events]);
   const eventLayout = useMemo(() => computeEventLayout(timedEvents), [timedEvents]);
+
+  const getHourFromMouseEvent = useCallback(
+    (e: React.MouseEvent) => {
+      const rect = colRef.current!.getBoundingClientRect();
+      const gradientY = e.clientY - rect.top;
+      const hour = pixelToHour(gradientY);
+      const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
+      return { hour, hourIndex, hourData: dayData.hourly[hourIndex] };
+    },
+    [dayData, pixelToHour],
+  );
+
+  // Event hover callbacks
+  const handleEventHoverStart = useCallback(
+    (event: CalendarEvent, _rect: DOMRect, e: React.MouseEvent) => {
+      suppressTooltipRef.current = true;
+      setTooltip(null);
+
+      const { hour, hourData } = getHourFromMouseEvent(e);
+      const gap = 12;
+      const flipX = e.clientX > window.innerWidth - 280;
+      const flipY = e.clientY > window.innerHeight * 0.75;
+
+      setHoveredEvent({
+        event,
+        hourData,
+        hour,
+        position: {
+          x: e.clientX + (flipX ? -gap : gap),
+          y: e.clientY + (flipY ? -gap : gap),
+          flipX,
+          flipY,
+        },
+      });
+    },
+    [getHourFromMouseEvent],
+  );
+
+  const handleEventHoverMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!hoveredEvent) return;
+      const { hour, hourData } = getHourFromMouseEvent(e);
+      const gap = 12;
+      const flipX = e.clientX > window.innerWidth - 280;
+      const flipY = e.clientY > window.innerHeight * 0.75;
+
+      setHoveredEvent((prev) =>
+        prev
+          ? {
+              ...prev,
+              hourData,
+              hour,
+              position: {
+                x: e.clientX + (flipX ? -gap : gap),
+                y: e.clientY + (flipY ? -gap : gap),
+                flipX,
+                flipY,
+              },
+            }
+          : null,
+      );
+    },
+    [hoveredEvent, getHourFromMouseEvent],
+  );
+
+  const handleEventHoverEnd = useCallback(() => {
+    suppressTooltipRef.current = false;
+    setHoveredEvent(null);
+  }, []);
+
+  const hoveredEventSummary = useMemo(() => {
+    if (!hoveredEvent) return null;
+    return aggregateWeatherRange(
+      dayData.hourly,
+      hoveredEvent.event.startHour,
+      hoveredEvent.event.endHour,
+      dayData.sunrise,
+      dayData.sunset,
+    );
+  }, [hoveredEvent, dayData]);
+
+  // Drag selection for ghost events
+  const {
+    isDragging,
+    activeSelection,
+    tooltipPosition: dragTooltipPosition,
+    handleDragStart,
+    handleDragMove,
+    handleDragEnd,
+    clearSelection,
+  } = useDragSelection(pixelToHour, colRef);
+
+  const dragSummary = useMemo(() => {
+    if (!activeSelection || activeSelection.endHour - activeSelection.startHour < 0.25) return null;
+    return aggregateWeatherRange(
+      dayData.hourly,
+      activeSelection.startHour,
+      activeSelection.endHour,
+      dayData.sunrise,
+      dayData.sunset,
+    );
+  }, [activeSelection, dayData]);
+
+  // Unsuppress weather tooltip when drag selection is cleared
+  useEffect(() => {
+    if (!isDragging && !activeSelection) {
+      suppressTooltipRef.current = false;
+    }
+  }, [isDragging, activeSelection]);
 
   // Night darkening overlay — a gradient of semi-transparent black matching the twilight curve
   const nightOverlay = useMemo(() => {
@@ -57,13 +179,15 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = colRef.current!.getBoundingClientRect();
-      // rect.top is already scroll-adjusted (goes negative as column scrolls up)
-      // so e.clientY - rect.top gives the correct position within the full gradient
-      const gradientY = e.clientY - rect.top;
-      const hour = pixelToHour(gradientY);
-      const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
-      const hourData = dayData.hourly[hourIndex];
+      // Forward drag move if dragging
+      if (isDragging) {
+        handleDragMove(e);
+        return;
+      }
+
+      if (suppressTooltipRef.current) return;
+
+      const { hour, hourData } = getHourFromMouseEvent(e);
 
       // Tooltip positioned in viewport-fixed coordinates via position:fixed
       // Flip horizontally/vertically to stay within viewport
@@ -82,12 +206,31 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
         },
       });
     },
-    [dayData, pixelToHour],
+    [getHourFromMouseEvent, isDragging, handleDragMove],
   );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!hasWeather) return;
+      clearSelection();
+      suppressTooltipRef.current = true;
+      setTooltip(null);
+      handleDragStart(e);
+    },
+    [hasWeather, handleDragStart, clearSelection],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (!isDragging) return;
+    handleDragEnd();
+  }, [isDragging, handleDragEnd]);
 
   const handleMouseLeave = useCallback(() => {
     setTooltip(null);
-  }, []);
+    if (isDragging) {
+      handleDragEnd();
+    }
+  }, [isDragging, handleDragEnd]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     const touch = e.touches[0];
@@ -171,7 +314,10 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
     <div
       className={styles.root}
       ref={colRef}
+      style={isDragging ? { userSelect: 'none' } : undefined}
+      onMouseDown={hasWeather ? handleMouseDown : undefined}
       onMouseMove={hasWeather ? handleMouseMove : undefined}
+      onMouseUp={hasWeather ? handleMouseUp : undefined}
       onMouseLeave={hasWeather ? handleMouseLeave : undefined}
       onTouchStart={hasWeather ? handleTouchStart : undefined}
       onTouchEnd={hasWeather ? handleTouchEnd : undefined}
@@ -215,6 +361,9 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
             key={`bg-${event.id}`}
             event={event}
             layout={eventLayout.get(event.id)}
+            onHoverStart={hasWeather ? handleEventHoverStart : undefined}
+            onHoverMove={hasWeather ? handleEventHoverMove : undefined}
+            onHoverEnd={hasWeather ? handleEventHoverEnd : undefined}
           />
         ))}
 
@@ -230,6 +379,13 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
 
         {/* Now indicator (z:7) */}
         <NowIndicator dayDate={dayData.date} />
+
+        {/* Ghost event from drag selection */}
+        {hasWeather &&
+          activeSelection &&
+          activeSelection.endHour - activeSelection.startHour >= 0.25 && (
+            <GhostEvent startHour={activeSelection.startHour} endHour={activeSelection.endHour} />
+          )}
 
         {/* Event labels (z:9) — above all weather effects */}
         {timedEvents.map((event) => (
@@ -249,6 +405,33 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
           sunrise={dayData.sunrise}
           sunset={dayData.sunset}
           position={tooltip.position}
+        />
+      )}
+
+      {/* Event weather tooltip */}
+      {hasWeather && hoveredEvent && hoveredEventSummary && (
+        <EventWeatherTooltip
+          title={hoveredEvent.event.title}
+          startHour={hoveredEvent.event.startHour}
+          endHour={hoveredEvent.event.endHour}
+          summary={hoveredEventSummary}
+          currentHourData={hoveredEvent.hourData}
+          currentHour={hoveredEvent.hour}
+          sunrise={dayData.sunrise}
+          sunset={dayData.sunset}
+          position={hoveredEvent.position}
+        />
+      )}
+
+      {/* Ghost event weather tooltip */}
+      {hasWeather && !isDragging && activeSelection && dragSummary && dragTooltipPosition && (
+        <EventWeatherTooltip
+          startHour={activeSelection.startHour}
+          endHour={activeSelection.endHour}
+          summary={dragSummary}
+          sunrise={dayData.sunrise}
+          sunset={dayData.sunset}
+          position={dragTooltipPosition}
         />
       )}
     </div>

@@ -7,6 +7,9 @@ import styles from './EventCard.module.css';
 interface EventCardProps {
   event: CalendarEvent;
   layout?: EventLayout;
+  onHoverStart?: (event: CalendarEvent, rect: DOMRect, e: React.MouseEvent) => void;
+  onHoverMove?: (e: React.MouseEvent) => void;
+  onHoverEnd?: () => void;
 }
 
 function useEventPosition(event: CalendarEvent, layout?: EventLayout) {
@@ -31,7 +34,13 @@ function useEventPosition(event: CalendarEvent, layout?: EventLayout) {
  * Event background — renders below weather overlays.
  * Glass-morphism effect lets temperature gradient show through.
  */
-export function EventCardBackground({ event, layout }: EventCardProps) {
+export function EventCardBackground({
+  event,
+  layout,
+  onHoverStart,
+  onHoverMove,
+  onHoverEnd,
+}: EventCardProps) {
   const pos = useEventPosition(event, layout);
 
   return (
@@ -43,6 +52,17 @@ export function EventCardBackground({ event, layout }: EventCardProps) {
         left: pos.left,
         width: pos.width,
       }}
+      onMouseEnter={
+        onHoverStart
+          ? (e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              onHoverStart(event, rect, e);
+            }
+          : undefined
+      }
+      onMouseMove={onHoverMove}
+      onMouseLeave={onHoverEnd}
+      onMouseDown={(e) => e.stopPropagation()}
     />
   );
 }

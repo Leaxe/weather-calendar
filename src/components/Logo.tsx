@@ -39,13 +39,69 @@ export default function Logo({ size = 24 }: LogoProps) {
       <rect x="33" y="4" width="11" height="40" rx="3" fill="url(#logoBar2)" />
       {/* Rain streaks on third column */}
       <g opacity="0.6" clipPath="url(#bar3Clip)">
-        <line x1="35" y1="10" x2="36" y2="16" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
-        <line x1="39" y1="8" x2="40" y2="14" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
-        <line x1="37" y1="18" x2="38" y2="24" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
-        <line x1="41" y1="20" x2="42" y2="26" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
-        <line x1="35" y1="27" x2="36" y2="33" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
-        <line x1="39" y1="30" x2="40" y2="36" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
-        <line x1="37" y1="37" x2="38" y2="43" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
+        <line
+          x1="35"
+          y1="10"
+          x2="36"
+          y2="16"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="39"
+          y1="8"
+          x2="40"
+          y2="14"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="37"
+          y1="18"
+          x2="38"
+          y2="24"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="41"
+          y1="20"
+          x2="42"
+          y2="26"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="35"
+          y1="27"
+          x2="36"
+          y2="33"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="39"
+          y1="30"
+          x2="40"
+          y2="36"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="37"
+          y1="37"
+          x2="38"
+          y2="43"
+          stroke="white"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
       </g>
     </svg>
   );
