@@ -24,9 +24,9 @@ export function pixelToHour(px: number): number {
 export function formatHour(decimalHour: number): string {
   const h = Math.floor(decimalHour);
   const m = Math.round((decimalHour - h) * 60);
-  const ampm = h >= 12 ? 'PM' : 'AM';
+  const ampm = h >= 12 ? 'pm' : 'am';
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${displayH}:${m.toString().padStart(2, '0')} ${ampm}`;
+  return `${displayH}:${m.toString().padStart(2, '0')}${ampm}`;
 }
 
 /**
@@ -37,4 +37,24 @@ export function formatGutterHour(hour: number): string {
   if (hour === 12) return '12 PM';
   if (hour < 12) return `${hour} AM`;
   return `${hour - 12} PM`;
+}
+
+/**
+ * Format a time range, e.g. "9:00 – 10:30 AM" or "11:30 AM – 1:00 PM"
+ */
+export function formatTimeRange(startHour: number, endHour: number): string {
+  const startAmpm = startHour >= 12 ? 'pm' : 'am';
+  const endAmpm = endHour >= 12 ? 'pm' : 'am';
+
+  const fmtTime = (h: number) => {
+    const hr = Math.floor(h);
+    const min = Math.round((h - hr) * 60);
+    const display = hr === 0 ? 12 : hr > 12 ? hr - 12 : hr;
+    return min === 0 ? `${display}` : `${display}:${min.toString().padStart(2, '0')}`;
+  };
+
+  if (startAmpm === endAmpm) {
+    return `${fmtTime(startHour)} – ${fmtTime(endHour)}${endAmpm}`;
+  }
+  return `${fmtTime(startHour)}${startAmpm} – ${fmtTime(endHour)}${endAmpm}`;
 }

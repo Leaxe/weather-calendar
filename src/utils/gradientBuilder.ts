@@ -159,7 +159,10 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
       else rain[i] = intensity;
     } else if (h.cloudCover > CLOUD_MIN_PCT) {
       // Clamp cloud intensity: flat below LOW, ramp between LOW–HIGH, flat above HIGH
-      const t = Math.max(0, Math.min(1, (h.cloudCover - CLOUD_LOW_PCT) / (CLOUD_HIGH_PCT - CLOUD_LOW_PCT)));
+      const t = Math.max(
+        0,
+        Math.min(1, (h.cloudCover - CLOUD_LOW_PCT) / (CLOUD_HIGH_PCT - CLOUD_LOW_PCT)),
+      );
       cloud[i] = CLOUD_MIN_INTENSITY + t * (CLOUD_MAX_INTENSITY - CLOUD_MIN_INTENSITY);
     }
 

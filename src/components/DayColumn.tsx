@@ -7,6 +7,7 @@ import SunMarker from './SunMarker';
 import { EventCardBackground, EventCardLabel } from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
+import { computeEventLayout } from '../utils/eventLayout';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
 
 interface TooltipState {
@@ -34,6 +35,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
 
   const weatherOverlays = useMemo(() => buildWeatherOverlays(dayData.hourly), [dayData]);
   const timedEvents = useMemo(() => events.filter((e) => !e.isAllDay), [events]);
+  const eventLayout = useMemo(() => computeEventLayout(timedEvents), [timedEvents]);
 
   // Night darkening overlay — a gradient of semi-transparent black matching the twilight curve
   const nightOverlay = useMemo(() => {
@@ -114,7 +116,11 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
 
         {/* Event backgrounds (z:3) — below weather */}
         {timedEvents.map((event) => (
-          <EventCardBackground key={`bg-${event.id}`} event={event} />
+          <EventCardBackground
+            key={`bg-${event.id}`}
+            event={event}
+            layout={eventLayout.get(event.id)}
+          />
         ))}
 
         {/* Weather condition overlays (z:4) */}
@@ -156,7 +162,11 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
 
         {/* Event labels (z:9) — above all weather effects */}
         {timedEvents.map((event) => (
-          <EventCardLabel key={`lbl-${event.id}`} event={event} />
+          <EventCardLabel
+            key={`lbl-${event.id}`}
+            event={event}
+            layout={eventLayout.get(event.id)}
+          />
         ))}
       </div>
 

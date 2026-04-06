@@ -291,53 +291,71 @@ html, body, #root {
 /* ===== Event Card ===== */
 .event-card {
   position: absolute;
-  left: 4px;
-  right: 4px;
   z-index: 3;
   border-radius: 6px;
-  background: hsl(var(--accent) / 0.85);
   overflow: hidden;
   cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+
+  /* Glass effect — lets temperature gradient show through */
+  background: hsl(var(--accent) / 0.35);
+  backdrop-filter: blur(8px) saturate(1.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid hsl(var(--accent) / 0.8);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .event-card:hover {
-  background: hsl(var(--accent) / 0.95);
-  transform: scale(1.01);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  background: hsl(var(--accent) / 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .event-card__content {
-  padding: 4px 8px;
+  padding: 3px 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: 1px;
 }
 
 .event-card__content--compact {
   flex-direction: row;
   align-items: center;
+  gap: 6px;
 }
 
 /* Event label — above weather but below night */
 .event-card__label {
   position: absolute;
-  left: 4px;
-  right: 4px;
   z-index: 5;
   pointer-events: none;
   overflow: hidden;
 }
 
 .event-card__title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: hsl(var(--accent-foreground));
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.4);
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-card__time {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
