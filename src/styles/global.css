@@ -208,7 +208,7 @@ html, body, #root {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 2;
+  z-index: 6;
   pointer-events: none;
   animation: fade-in 1.5s ease-out;
 }
@@ -217,7 +217,7 @@ html, body, #root {
 .day-column__loading-shimmer {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 9;
   pointer-events: none;
   background: linear-gradient(
     180deg,
@@ -241,7 +241,7 @@ html, body, #root {
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 1;
+  z-index: 4;
   pointer-events: none;
   animation: fade-in 1.5s ease-out;
 }
@@ -258,7 +258,7 @@ html, body, #root {
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 3;
+  z-index: 7;
   pointer-events: none;
   animation: fade-in 1.5s ease-out;
 }
@@ -293,20 +293,20 @@ html, body, #root {
   position: absolute;
   left: 4px;
   right: 4px;
-  z-index: 4;
+  z-index: 3;
   border-radius: 6px;
-  background: hsl(var(--accent));
-  opacity: 0.92;
+  background: hsl(var(--accent) / 0.85);
   overflow: hidden;
   cursor: pointer;
   transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
 }
 
 .event-card:hover {
-  opacity: 1;
+  background: hsl(var(--accent) / 0.95);
   transform: scale(1.01);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .event-card__content {
@@ -322,10 +322,21 @@ html, body, #root {
   align-items: center;
 }
 
+/* Event label — above weather but below night */
+.event-card__label {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+
 .event-card__title {
   font-size: 12px;
   font-weight: 600;
   color: hsl(var(--accent-foreground));
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.3);
   line-height: 1.3;
 }
 
@@ -336,7 +347,7 @@ html, body, #root {
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 6;
+  z-index: 8;
   pointer-events: none;
 }
 

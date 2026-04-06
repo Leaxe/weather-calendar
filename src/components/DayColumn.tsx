@@ -4,7 +4,7 @@ import { useZoom } from '../contexts/ZoomContext';
 
 import { getDayTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
-import EventCard from './EventCard';
+import { EventCardBackground, EventCardLabel } from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
@@ -33,6 +33,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
   );
 
   const weatherOverlays = useMemo(() => buildWeatherOverlays(dayData.hourly), [dayData]);
+  const timedEvents = useMemo(() => events.filter((e) => !e.isAllDay), [events]);
 
   // Night darkening overlay — a gradient of semi-transparent black matching the twilight curve
   const nightOverlay = useMemo(() => {
@@ -111,7 +112,12 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
           <div key={i} className="day-column__gridline" style={{ top: i * hourHeight }} />
         ))}
 
-        {/* Weather condition overlays — only when weather data is loaded */}
+        {/* Event backgrounds (z:3) — below weather */}
+        {timedEvents.map((event) => (
+          <EventCardBackground key={`bg-${event.id}`} event={event} />
+        ))}
+
+        {/* Weather condition overlays (z:4) */}
         {hasWeather &&
           weatherOverlays.map(({ type, intensities }) => {
             const seed = daySeed * 100 + type.charCodeAt(0);
@@ -130,7 +136,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
             );
           })}
 
-        {/* Night darkening — covers weather overlays */}
+        {/* Night darkening (z:5) */}
         {hasWeather && (
           <div
             className="day-column__night-overlay"
@@ -138,22 +144,20 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
           />
         )}
 
-        {/* Loading shimmer — below events */}
-        {isLoading && <div className="day-column__loading-shimmer" />}
-
-        {/* Sunrise / Sunset markers — only with weather */}
+        {/* Sunrise / Sunset markers (z:6) */}
         {hasWeather && <SunMarker hour={dayData.sunrise} type="sunrise" />}
         {hasWeather && <SunMarker hour={dayData.sunset} type="sunset" />}
 
-        {/* Now indicator */}
+        {/* Now indicator (z:7) */}
         <NowIndicator dayDate={dayData.date} />
 
-        {/* Timed events (skip all-day) */}
-        {events
-          .filter((e) => !e.isAllDay)
-          .map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+        {/* Loading shimmer (z:8) */}
+        {isLoading && <div className="day-column__loading-shimmer" />}
+
+        {/* Event labels (z:9) — above all weather effects */}
+        {timedEvents.map((event) => (
+          <EventCardLabel key={`lbl-${event.id}`} event={event} />
+        ))}
       </div>
 
       {/* Tooltip — only with weather */}
