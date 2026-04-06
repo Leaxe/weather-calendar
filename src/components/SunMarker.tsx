@@ -1,4 +1,5 @@
-import { hourToPixel, formatHour } from '../utils/timeUtils';
+import { useZoom } from '../contexts/ZoomContext';
+import { formatHour } from '../utils/timeUtils';
 
 interface SunMarkerProps {
   hour: number;
@@ -6,6 +7,7 @@ interface SunMarkerProps {
 }
 
 export default function SunMarker({ hour, type }: SunMarkerProps) {
+  const { hourToPixel } = useZoom();
   const top = hourToPixel(hour);
   const isSunrise = type === 'sunrise';
 

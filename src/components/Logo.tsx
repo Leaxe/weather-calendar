@@ -12,7 +12,16 @@ export default function Logo({ size = 24 }: LogoProps) {
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* Calendar body */}
-      <rect x="4" y="10" width="40" height="34" rx="4" fill="#1e293b" stroke="#475569" strokeWidth="2" />
+      <rect
+        x="4"
+        y="10"
+        width="40"
+        height="34"
+        rx="4"
+        fill="#1e293b"
+        stroke="#475569"
+        strokeWidth="2"
+      />
       {/* Calendar top bar */}
       <rect x="4" y="10" width="40" height="10" rx="4" fill="#334155" />
       <rect x="4" y="16" width="40" height="4" fill="#334155" />

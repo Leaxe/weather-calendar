@@ -4,6 +4,7 @@ import type { OverlayType } from '../types';
  * Generates full-day weather overlay textures using Canvas API.
  * One tall canvas per overlay type per day, with density varying
  * smoothly across the 24-hour height based on an intensity curve.
+ * Accepts hourPx to render at the correct zoom level.
  */
 
 // Seeded PRNG (mulberry32)
@@ -17,8 +18,8 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-const HOUR_PX = 60; // must match HOUR_HEIGHT in timeUtils
-const DAY_HEIGHT = HOUR_PX * 24;
+// Base reference: configs are tuned for 60px/hour
+const BASE_HOUR_PX = 60;
 
 interface CloudFogConfig {
   passes: number;
@@ -81,21 +82,21 @@ const configs: Configs = {
     yStretch: 0.18,
     minAlpha: 0.07,
     maxAlpha: 0.2,
-    color: '#c4c8d1',
+    color: '#d8dce6',
     blur: 0.15,
   },
   rain: {
-    densityPerHour: 120,
+    densityPerHour: 40,
     minLength: 6,
     maxLength: 14,
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     angle: -78,
     color: '#c0d8ff',
     minAlpha: 0.3,
-    maxAlpha: 0.5,
+    maxAlpha: 0.7,
   },
   freezing_rain: {
-    densityPerHour: 100,
+    densityPerHour: 35,
     minLength: 5,
     maxLength: 12,
     strokeWidth: 3.5,
@@ -117,10 +118,9 @@ const configs: Configs = {
 
 /**
  * Sample the intensity curve at a given pixel y-position.
- * Interpolates linearly between hourly values for smooth variation.
  */
-function sampleIntensity(intensities: number[], y: number): number {
-  const hour = y / HOUR_PX;
+function sampleIntensity(intensities: number[], y: number, hourPx: number): number {
+  const hour = y / hourPx;
   const lo = Math.max(0, Math.min(23, Math.floor(hour)));
   const hi = Math.min(23, lo + 1);
   const frac = hour - lo;
@@ -131,31 +131,37 @@ interface GenerateTextureParams {
   type: OverlayType;
   intensities: number[];
   seed: number;
+  hourPx: number;
   width?: number;
 }
 
 /**
- * Generate a full-day texture for an overlay type.
+ * Generate a full-day texture for an overlay type at the given zoom level.
  */
 export function generateDayTexture({
   type,
   intensities,
   seed,
+  hourPx,
   width = 200,
 }: GenerateTextureParams): string {
   if (typeof document === 'undefined') return '';
+  const dayHeight = hourPx * 24;
   const canvas = document.createElement('canvas');
   canvas.width = width;
-  canvas.height = DAY_HEIGHT;
+  canvas.height = dayHeight;
   const ctx = canvas.getContext('2d')!;
   const rand = mulberry32(seed);
 
+  // Scale density proportionally to zoom so element count per visual area stays constant
+  const densityScale = hourPx / BASE_HOUR_PX;
+
   if (type === 'rain' || type === 'freezing_rain') {
-    drawRain(ctx, rand, width, intensities, type);
+    drawRain(ctx, rand, width, intensities, hourPx, dayHeight, densityScale, type);
   } else if (type === 'snow') {
-    drawSnow(ctx, rand, width, intensities);
+    drawSnow(ctx, rand, width, intensities, hourPx, dayHeight, densityScale);
   } else {
-    drawClouds(ctx, rand, width, intensities, type);
+    drawClouds(ctx, rand, width, intensities, hourPx, dayHeight, densityScale, type);
   }
 
   return canvas.toDataURL();
@@ -166,27 +172,28 @@ function drawClouds(
   rand: () => number,
   width: number,
   intensities: number[],
+  hourPx: number,
+  dayHeight: number,
+  densityScale: number,
   type: 'cloud' | 'fog',
 ): void {
   const cfg = configs[type];
 
   for (let pass = 0; pass < cfg.passes; pass++) {
-    // Scatter blobs across the entire day, density proportional to local intensity
     for (let hour = 0; hour < 24; hour++) {
       const intensity = intensities[hour];
       if (intensity <= 0) continue;
-      const count = Math.ceil(cfg.densityPerHour * intensity);
+      const count = Math.ceil(cfg.densityPerHour * intensity * densityScale);
 
       for (let i = 0; i < count; i++) {
         const x = rand() * width;
-        // Place within this hour's region, with some bleed into neighbors
-        const y = hour * HOUR_PX + (rand() - 0.2) * HOUR_PX * 1.4;
+        const y = hour * hourPx + (rand() - 0.2) * hourPx * 1.4;
         const rx = cfg.minRadius + rand() * (cfg.maxRadius - cfg.minRadius);
         const ry = rx * cfg.yStretch;
-        // Alpha scales with the local intensity at this exact y position
         const localIntensity = sampleIntensity(
           intensities,
-          Math.max(0, Math.min(DAY_HEIGHT - 1, y)),
+          Math.max(0, Math.min(dayHeight - 1, y)),
+          hourPx,
         );
         const alpha = (cfg.minAlpha + rand() * (cfg.maxAlpha - cfg.minAlpha)) * localIntensity;
 
@@ -205,13 +212,13 @@ function drawClouds(
     const small = document.createElement('canvas');
     const sf = cfg.blur;
     small.width = Math.ceil(width * sf);
-    small.height = Math.ceil(DAY_HEIGHT * sf);
+    small.height = Math.ceil(dayHeight * sf);
     const sCtx = small.getContext('2d')!;
     sCtx.drawImage(ctx.canvas, 0, 0, small.width, small.height);
-    ctx.clearRect(0, 0, width, DAY_HEIGHT);
+    ctx.clearRect(0, 0, width, dayHeight);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(small, 0, 0, width, DAY_HEIGHT);
+    ctx.drawImage(small, 0, 0, width, dayHeight);
   }
 }
 
@@ -220,6 +227,9 @@ function drawRain(
   rand: () => number,
   width: number,
   intensities: number[],
+  hourPx: number,
+  _dayHeight: number,
+  densityScale: number,
   type: 'rain' | 'freezing_rain' = 'rain',
 ): void {
   const cfg = configs[type];
@@ -228,12 +238,12 @@ function drawRain(
   for (let hour = 0; hour < 24; hour++) {
     const intensity = intensities[hour];
     if (intensity <= 0) continue;
-    const count = Math.ceil(cfg.densityPerHour * intensity);
+    const count = Math.ceil(cfg.densityPerHour * intensity * densityScale);
 
     for (let i = 0; i < count; i++) {
       const x = rand() * width;
-      const y = hour * HOUR_PX + rand() * HOUR_PX;
-      const localIntensity = sampleIntensity(intensities, y);
+      const y = hour * hourPx + rand() * hourPx;
+      const localIntensity = sampleIntensity(intensities, y, hourPx);
       const len = cfg.minLength + rand() * (cfg.maxLength - cfg.minLength);
       const alpha = (cfg.minAlpha + rand() * (cfg.maxAlpha - cfg.minAlpha)) * localIntensity;
 
@@ -259,18 +269,21 @@ function drawSnow(
   rand: () => number,
   width: number,
   intensities: number[],
+  hourPx: number,
+  dayHeight: number,
+  densityScale: number,
 ): void {
   const cfg = configs.snow;
 
   for (let hour = 0; hour < 24; hour++) {
     const intensity = intensities[hour];
     if (intensity <= 0) continue;
-    const count = Math.ceil(cfg.densityPerHour * intensity);
+    const count = Math.ceil(cfg.densityPerHour * intensity * densityScale);
 
     for (let i = 0; i < count; i++) {
       const x = rand() * width;
-      const y = hour * HOUR_PX + rand() * HOUR_PX;
-      const localIntensity = sampleIntensity(intensities, y);
+      const y = hour * hourPx + rand() * hourPx;
+      const localIntensity = sampleIntensity(intensities, y, hourPx);
       const r = cfg.minRadius + rand() * (cfg.maxRadius - cfg.minRadius);
       const alpha = (cfg.minAlpha + rand() * (cfg.maxAlpha - cfg.minAlpha)) * localIntensity;
 
@@ -329,26 +342,33 @@ function drawSnow(
     const small = document.createElement('canvas');
     const sf = cfg.blur;
     small.width = Math.ceil(width * sf);
-    small.height = Math.ceil(DAY_HEIGHT * sf);
+    small.height = Math.ceil(dayHeight * sf);
     const sCtx = small.getContext('2d')!;
     sCtx.drawImage(ctx.canvas, 0, 0, small.width, small.height);
-    ctx.clearRect(0, 0, width, DAY_HEIGHT);
+    ctx.clearRect(0, 0, width, dayHeight);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(small, 0, 0, width, DAY_HEIGHT);
+    ctx.drawImage(small, 0, 0, width, dayHeight);
   }
 }
 
-// Cache by key
+// Cache by key — includes rounded hourPx for zoom-level caching
 const textureCache = new Map<string, string>();
 
 /**
  * Get a full-day texture data URL, cached.
+ * hourPx is rounded to nearest 10 to limit cache entries across zoom levels.
  */
-export function getDayTexture(type: OverlayType, intensities: number[], seed: number): string {
-  const key = `${type}-${seed}-${intensities.map((v) => v.toFixed(2)).join(',')}`;
+export function getDayTexture(
+  type: OverlayType,
+  intensities: number[],
+  seed: number,
+  hourPx: number,
+): string {
+  const roundedPx = Math.round(hourPx / 10) * 10;
+  const key = `${type}-${seed}-${roundedPx}-${intensities.map((v) => v.toFixed(2)).join(',')}`;
   if (!textureCache.has(key)) {
-    textureCache.set(key, generateDayTexture({ type, intensities, seed }));
+    textureCache.set(key, generateDayTexture({ type, intensities, seed, hourPx: roundedPx }));
   }
   return textureCache.get(key)!;
 }

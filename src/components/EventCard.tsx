@@ -1,4 +1,4 @@
-import { hourToPixel, HOUR_HEIGHT } from '../utils/timeUtils';
+import { useZoom } from '../contexts/ZoomContext';
 import type { CalendarEvent } from '../types';
 
 interface EventCardProps {
@@ -6,8 +6,9 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
+  const { hourToPixel, hourHeight } = useZoom();
   const top = hourToPixel(event.startHour);
-  const height = (event.endHour - event.startHour) * HOUR_HEIGHT;
+  const height = (event.endHour - event.startHour) * hourHeight;
   const isShort = height < 36;
 
   return (

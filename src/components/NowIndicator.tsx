@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { hourToPixel } from '../utils/timeUtils';
+import { useZoom } from '../contexts/ZoomContext';
 import { todayStr } from '../utils/dateUtils';
 
 interface NowIndicatorProps {
@@ -17,6 +17,7 @@ function getNowHour(): number {
  */
 export default function NowIndicator({ dayDate }: NowIndicatorProps) {
   const [now, setNow] = useState(() => ({ today: todayStr(), hour: getNowHour() }));
+  const { hourToPixel } = useZoom();
 
   useEffect(() => {
     const id = setInterval(() => {

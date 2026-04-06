@@ -54,10 +54,7 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
   // Refresh every hour
   const [refreshTick, setRefreshTick] = useState(0);
   useEffect(() => {
-    const id = setInterval(
-      () => setRefreshTick((t) => t + 1),
-      60 * 60 * 1000,
-    );
+    const id = setInterval(() => setRefreshTick((t) => t + 1), 60 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -94,7 +91,12 @@ export function useWeather(location: GeoLocation | null, weekStartDate: string):
   }, [location, cacheKey, weekStartDate, refreshTick]);
 
   if (!location) {
-    return { data: makePlaceholderWeek(weekStartDate), hasWeather: false, isLoading: false, error: null };
+    return {
+      data: makePlaceholderWeek(weekStartDate),
+      hasWeather: false,
+      isLoading: false,
+      error: null,
+    };
   }
 
   const hasCurrentData = !!(fetchState.data && fetchState.dataKey === cacheKey);

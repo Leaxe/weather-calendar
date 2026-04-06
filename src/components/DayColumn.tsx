@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { buildDayGradient, buildWeatherOverlays, getDarkness } from '../utils/gradientBuilder';
-import { TOTAL_HEIGHT, HOUR_HEIGHT, pixelToHour } from '../utils/timeUtils';
+import { useZoom } from '../contexts/ZoomContext';
 
 import { getDayTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
@@ -25,6 +25,7 @@ interface DayColumnProps {
 export default function DayColumn({ dayData, events, isLoading, hasWeather }: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const colRef = useRef<HTMLDivElement>(null);
+  const { totalHeight, hourHeight, pixelToHour } = useZoom();
 
   const gradient = useMemo(
     () => buildDayGradient(dayData.hourly, dayData.sunrise, dayData.sunset),
@@ -75,7 +76,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
         },
       });
     },
-    [dayData],
+    [dayData, pixelToHour],
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -102,26 +103,26 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
         className="day-column__gradient"
         style={{
           background: gradient,
-          height: TOTAL_HEIGHT,
+          height: totalHeight,
         }}
       >
         {/* Hour gridlines */}
         {Array.from({ length: 24 }, (_, i) => (
-          <div key={i} className="day-column__gridline" style={{ top: i * HOUR_HEIGHT }} />
+          <div key={i} className="day-column__gridline" style={{ top: i * hourHeight }} />
         ))}
 
         {/* Weather condition overlays — only when weather data is loaded */}
         {hasWeather &&
           weatherOverlays.map(({ type, intensities }) => {
             const seed = daySeed * 100 + type.charCodeAt(0);
-            const tex = getDayTexture(type, intensities, seed);
+            const tex = getDayTexture(type, intensities, seed, hourHeight);
             return (
               <div
                 key={`wx-${type}`}
                 className="wx-overlay"
                 style={{
                   top: 0,
-                  height: TOTAL_HEIGHT,
+                  height: totalHeight,
                   backgroundImage: `url(${tex})`,
                   backgroundSize: '100% 100%',
                 }}
@@ -133,7 +134,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
         {hasWeather && (
           <div
             className="day-column__night-overlay"
-            style={{ height: TOTAL_HEIGHT, background: nightOverlay }}
+            style={{ height: totalHeight, background: nightOverlay }}
           />
         )}
 
