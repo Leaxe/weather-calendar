@@ -7,7 +7,6 @@ import { getDayTexture } from '../utils/noiseTextures';
 import SunMarker from './SunMarker';
 import { EventCardBackground, EventCardLabel } from './EventCard';
 import WeatherTooltip from './WeatherTooltip';
-import EventWeatherTooltip from './EventWeatherTooltip';
 import NowIndicator from './NowIndicator';
 import GhostEvent from './GhostEvent';
 import { computeEventLayout } from '../utils/eventLayout';
@@ -410,28 +409,30 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
 
       {/* Event weather tooltip */}
       {hasWeather && hoveredEvent && hoveredEventSummary && (
-        <EventWeatherTooltip
-          title={hoveredEvent.event.title}
-          startHour={hoveredEvent.event.startHour}
-          endHour={hoveredEvent.event.endHour}
-          summary={hoveredEventSummary}
-          currentHourData={hoveredEvent.hourData}
-          currentHour={hoveredEvent.hour}
+        <WeatherTooltip
+          hourData={hoveredEvent.hourData}
+          hour={hoveredEvent.hour}
           sunrise={dayData.sunrise}
           sunset={dayData.sunset}
           position={hoveredEvent.position}
+          rangeTitle={hoveredEvent.event.title}
+          rangeStartHour={hoveredEvent.event.startHour}
+          rangeEndHour={hoveredEvent.event.endHour}
+          rangeSummary={hoveredEventSummary}
         />
       )}
 
       {/* Ghost event weather tooltip */}
       {hasWeather && !isDragging && activeSelection && dragSummary && dragTooltipPosition && (
-        <EventWeatherTooltip
-          startHour={activeSelection.startHour}
-          endHour={activeSelection.endHour}
-          summary={dragSummary}
+        <WeatherTooltip
+          hourData={dayData.hourly[Math.floor(activeSelection.startHour)] ?? dayData.hourly[0]}
+          hour={activeSelection.startHour}
           sunrise={dayData.sunrise}
           sunset={dayData.sunset}
           position={dragTooltipPosition}
+          rangeStartHour={activeSelection.startHour}
+          rangeEndHour={activeSelection.endHour}
+          rangeSummary={dragSummary}
         />
       )}
     </div>
