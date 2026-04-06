@@ -91,9 +91,12 @@ export function buildDayGradient(
 }
 
 // --- Overlay intensity thresholds & scaling ---
-// Cloud: minimum cloud cover % to show overlay, and divisor for intensity
-const CLOUD_MIN_PCT = 10;
-const CLOUD_SCALE = 100; // cloudCover / CLOUD_SCALE = intensity
+// Cloud: coverage below LOW shows at minimum intensity, above HIGH shows at maximum
+const CLOUD_MIN_PCT = 10; // below this, no overlay
+const CLOUD_LOW_PCT = 35; // coverage at or below this = minimum intensity
+const CLOUD_HIGH_PCT = 80; // coverage at or above this = maximum intensity
+const CLOUD_MIN_INTENSITY = 0.15;
+const CLOUD_MAX_INTENSITY = 0.6;
 
 // Precipitation: max mm for full intensity, and minimum visible intensity
 const PRECIP_MAX_MM = 5;
@@ -155,7 +158,9 @@ export function buildWeatherOverlays(hourlyData: HourlyData[]): WeatherOverlay[]
       else if (precipType === 'freezing_rain') freezingRain[i] = intensity;
       else rain[i] = intensity;
     } else if (h.cloudCover > CLOUD_MIN_PCT) {
-      cloud[i] = h.cloudCover / CLOUD_SCALE;
+      // Clamp cloud intensity: flat below LOW, ramp between LOW–HIGH, flat above HIGH
+      const t = Math.max(0, Math.min(1, (h.cloudCover - CLOUD_LOW_PCT) / (CLOUD_HIGH_PCT - CLOUD_LOW_PCT)));
+      cloud[i] = CLOUD_MIN_INTENSITY + t * (CLOUD_MAX_INTENSITY - CLOUD_MIN_INTENSITY);
     }
 
     // Fog layers with anything (WMO codes 45=fog, 48=rime fog)

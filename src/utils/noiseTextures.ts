@@ -183,12 +183,16 @@ function drawClouds(
     for (let hour = 0; hour < 24; hour++) {
       const intensity = intensities[hour];
       if (intensity <= 0) continue;
-      const count = Math.ceil(cfg.densityPerHour * intensity * densityScale);
+      // Density ramps up faster at high intensity for denser overcast coverage
+      const densityBoost = 1 + intensity * intensity * 6;
+      const count = Math.ceil(cfg.densityPerHour * intensity * densityScale * densityBoost);
 
       for (let i = 0; i < count; i++) {
         const x = rand() * width;
         const y = hour * hourPx + (rand() - 0.2) * hourPx * 1.4;
-        const rx = cfg.minRadius + rand() * (cfg.maxRadius - cfg.minRadius);
+        // Shrink blobs at high intensity for more uniform coverage
+        const sizeScale = 1 - intensity * 0.3;
+        const rx = (cfg.minRadius + rand() * (cfg.maxRadius - cfg.minRadius)) * sizeScale;
         const ry = rx * cfg.yStretch;
         const localIntensity = sampleIntensity(
           intensities,
