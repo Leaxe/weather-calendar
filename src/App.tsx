@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import WeekGrid from './components/WeekGrid';
 import LocationPicker from './components/LocationPicker';
 import DateNavigation from './components/DateNavigation';
+import DateRangePicker from './components/DateRangePicker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePersistedLocation } from './hooks/usePersistedLocation';
 import { useWeather } from './hooks/useWeather';
@@ -61,6 +62,11 @@ export default function App() {
     clearCalendar,
   } = useCalendarEvents(weekStartDate);
 
+  const handleDatePick = useCallback(
+    (date: Date) => setWeekStartDate(getSunday(date.toISOString().slice(0, 10))),
+    [setWeekStartDate],
+  );
+
   return (
     <ZoomProvider>
       <div className={styles.root}>
@@ -90,7 +96,7 @@ export default function App() {
             </header>
             <div className={styles.mobileNav}>
               <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
-              <span className={styles.subtitle}>{formatDateRange(weekStartDate, data)}</span>
+              <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onSelect={handleDatePick} />
             </div>
           </>
         ) : (
@@ -98,7 +104,7 @@ export default function App() {
             <Logo size={36} />
             <h1 className={styles.title}>Weather Calendar</h1>
             <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
-            <span className={styles.subtitle}>{formatDateRange(weekStartDate, data)}</span>
+            <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onSelect={handleDatePick} />
             <div className={styles.spacer} />
             <CalendarImport
               source={calSource}
