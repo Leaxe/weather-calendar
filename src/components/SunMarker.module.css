@@ -1,0 +1,43 @@
+/* ===== Sun Markers ===== */
+.root {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sun-marker);
+  pointer-events: none;
+  animation: fadeIn 1.5s ease-out;
+}
+
+.line {
+  height: 2px;
+  width: 100%;
+}
+
+.lineSunrise {
+  background: linear-gradient(to right, transparent, hsla(45, 100%, 65%, 0.7), transparent);
+  box-shadow: 0 0 8px hsla(45, 100%, 60%, 0.4);
+}
+
+.lineSunset {
+  background: linear-gradient(to right, transparent, hsla(25, 100%, 55%, 0.7), transparent);
+  box-shadow: 0 0 8px hsla(25, 100%, 50%, 0.4);
+}
+
+.label {
+  position: absolute;
+  right: 4px;
+  top: -14px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

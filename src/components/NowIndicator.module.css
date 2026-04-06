@@ -1,0 +1,24 @@
+/* ===== Now Indicator ===== */
+.root {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: var(--z-now-indicator);
+  pointer-events: none;
+}
+
+.dot {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ea4335;
+}
+
+.line {
+  height: 2px;
+  background: #ea4335;
+  width: 100%;
+}

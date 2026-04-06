@@ -12,7 +12,7 @@ import Logo from './components/Logo';
 import { generateDemoWeek } from './data/demoWeather';
 import { addDays, getSunday, todayStr } from './utils/dateUtils';
 import { ZoomProvider } from './contexts/ZoomContext';
-import './styles/global.css';
+import styles from './App.module.css';
 
 function formatDateRange(startDate: string, data: { date: string }[]): string {
   if (data.length === 0) {
@@ -62,15 +62,15 @@ export default function App() {
 
   return (
     <ZoomProvider>
-      <div className="app">
-        <header className="app-header">
-          <div className="app-header__left">
+      <div className={styles.root}>
+        <header className={styles.header}>
+          <div className={styles.headerLeft}>
             <Logo size={36} />
-            <h1 className="app-header__title">Weather Calendar</h1>
+            <h1 className={styles.headerTitle}>Weather Calendar</h1>
             <DateNavigation weekStartDate={weekStartDate} onChange={setWeekStartDate} />
-            <span className="app-header__subtitle">{formatDateRange(weekStartDate, data)}</span>
+            <span className={styles.headerSubtitle}>{formatDateRange(weekStartDate, data)}</span>
           </div>
-          <div className="app-header__right">
+          <div className={styles.headerRight}>
             <CalendarImport
               source={calSource}
               isRefreshing={isRefreshing}

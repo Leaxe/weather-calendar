@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useZoom } from '../contexts/ZoomContext';
 import { todayStr } from '../utils/dateUtils';
+import styles from './NowIndicator.module.css';
 
 interface NowIndicatorProps {
   dayDate: string;
@@ -31,9 +32,9 @@ export default function NowIndicator({ dayDate }: NowIndicatorProps) {
   const top = hourToPixel(now.hour);
 
   return (
-    <div className="now-indicator" style={{ top }}>
-      <div className="now-indicator__dot" />
-      <div className="now-indicator__line" />
+    <div className={styles.root} style={{ top }}>
+      <div className={styles.dot} />
+      <div className={styles.line} />
     </div>
   );
 }

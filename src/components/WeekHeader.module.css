@@ -1,0 +1,66 @@
+/* ===== Week Header ===== */
+.root {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color-strong);
+  background: var(--bg-surface);
+  height: var(--day-header-height);
+  padding-right: 8px; /* match scrollbar width */
+}
+
+.gutter {
+  width: var(--gutter-width);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+}
+
+.day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-right: 1px solid var(--border-color);
+  padding: 8px 4px;
+}
+
+.day:last-child {
+  border-right: none;
+}
+
+.dayName {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+}
+
+.date {
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+.dateToday {
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+  background: #4285f4;
+  color: white;
+  border-radius: 50%;
+  min-width: 32px;
+  min-height: 32px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tempRange {
+  font-size: 11px;
+  color: var(--text-secondary);
+}

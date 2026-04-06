@@ -1,0 +1,24 @@
+/* ===== Time Gutter ===== */
+.root {
+  width: var(--gutter-width);
+  flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg);
+}
+
+.label {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.label span {
+  font-size: 10px;
+  color: var(--text-secondary);
+  transform: translateY(-6px);
+  white-space: nowrap;
+}

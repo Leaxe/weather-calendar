@@ -1,0 +1,29 @@
+/* ===== Week Grid ===== */
+.root {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.body {
+  display: flex;
+  position: relative;
+}
+
+/* ===== Scrollbar ===== */
+.root::-webkit-scrollbar {
+  width: 8px;
+}
+
+.root::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.root::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.root::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}

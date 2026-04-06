@@ -9,6 +9,7 @@ import WeatherTooltip from './WeatherTooltip';
 import NowIndicator from './NowIndicator';
 import { computeEventLayout } from '../utils/eventLayout';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
+import styles from './DayColumn.module.css';
 
 interface TooltipState {
   hourData: HourlyData;
@@ -97,13 +98,13 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
 
   return (
     <div
-      className="day-column"
+      className={styles.root}
       ref={colRef}
       onMouseMove={hasWeather ? handleMouseMove : undefined}
       onMouseLeave={hasWeather ? handleMouseLeave : undefined}
     >
       <div
-        className="day-column__gradient"
+        className={styles.gradient}
         style={{
           background: gradient,
           height: totalHeight,
@@ -111,7 +112,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
       >
         {/* Hour gridlines */}
         {Array.from({ length: 24 }, (_, i) => (
-          <div key={i} className="day-column__gridline" style={{ top: i * hourHeight }} />
+          <div key={i} className={styles.gridline} style={{ top: i * hourHeight }} />
         ))}
 
         {/* Event backgrounds (z:3) — below weather */}
@@ -131,7 +132,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
             return (
               <div
                 key={`wx-${type}`}
-                className="wx-overlay"
+                className={styles.wxOverlay}
                 style={{
                   top: 0,
                   height: totalHeight,
@@ -145,7 +146,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
         {/* Night darkening (z:5) */}
         {hasWeather && (
           <div
-            className="day-column__night-overlay"
+            className={styles.nightOverlay}
             style={{ height: totalHeight, background: nightOverlay }}
           />
         )}
@@ -158,7 +159,7 @@ export default function DayColumn({ dayData, events, isLoading, hasWeather }: Da
         <NowIndicator dayDate={dayData.date} />
 
         {/* Loading shimmer (z:8) */}
-        {isLoading && <div className="day-column__loading-shimmer" />}
+        {isLoading && <div className={styles.loadingShimmer} />}
 
         {/* Event labels (z:9) — above all weather effects */}
         {timedEvents.map((event) => (

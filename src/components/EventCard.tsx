@@ -2,6 +2,7 @@ import { useZoom } from '../contexts/ZoomContext';
 import { formatTimeRange } from '../utils/timeUtils';
 import type { CalendarEvent } from '../types';
 import type { EventLayout } from '../utils/eventLayout';
+import styles from './EventCard.module.css';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -35,7 +36,7 @@ export function EventCardBackground({ event, layout }: EventCardProps) {
 
   return (
     <div
-      className="event-card"
+      className={styles.card}
       style={{
         top: pos.top,
         height: pos.height,
@@ -58,7 +59,7 @@ export function EventCardLabel({ event, layout }: EventCardProps) {
 
   return (
     <div
-      className="event-card__label"
+      className={styles.label}
       style={{
         top: pos.top,
         height: pos.height,
@@ -66,9 +67,9 @@ export function EventCardLabel({ event, layout }: EventCardProps) {
         width: pos.width,
       }}
     >
-      <div className={`event-card__content ${isShort ? 'event-card__content--compact' : ''}`}>
-        <span className="event-card__title">{event.title}</span>
-        {!isTiny && <span className="event-card__time">{timeStr}</span>}
+      <div className={isShort ? styles.contentCompact : styles.content}>
+        <span className={styles.title}>{event.title}</span>
+        {!isTiny && <span className={styles.time}>{timeStr}</span>}
       </div>
     </div>
   );

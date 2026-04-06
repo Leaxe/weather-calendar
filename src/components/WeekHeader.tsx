@@ -1,5 +1,6 @@
 import type { DayData } from '../types';
 import { todayStr } from '../utils/dateUtils';
+import styles from './WeekHeader.module.css';
 
 interface WeekHeaderProps {
   weekData: DayData[];
@@ -10,8 +11,8 @@ export default function WeekHeader({ weekData, hasWeather }: WeekHeaderProps) {
   const today = todayStr();
 
   return (
-    <div className="week-header">
-      <div className="week-header__gutter" />
+    <div className={styles.root}>
+      <div className={styles.gutter} />
       {weekData.map((day, i) => {
         const dateNum = new Date(day.date + 'T12:00:00').getDate();
         const isToday = day.date === today;
@@ -23,16 +24,10 @@ export default function WeekHeader({ weekData, hasWeather }: WeekHeaderProps) {
         }
 
         return (
-          <div key={i} className="week-header__day">
-            <span className="week-header__day-name">{day.dayName}</span>
-            <span
-              className={
-                isToday ? 'week-header__date week-header__date--today' : 'week-header__date'
-              }
-            >
-              {dateNum}
-            </span>
-            {tempRange && <span className="week-header__temp-range">{tempRange}</span>}
+          <div key={i} className={styles.day}>
+            <span className={styles.dayName}>{day.dayName}</span>
+            <span className={isToday ? styles.dateToday : styles.date}>{dateNum}</span>
+            {tempRange && <span className={styles.tempRange}>{tempRange}</span>}
           </div>
         );
       })}

@@ -3,6 +3,7 @@ import TimeGutter from './TimeGutter';
 import DayColumn from './DayColumn';
 import { useZoom } from '../contexts/ZoomContext';
 import type { DayData, CalendarEvent } from '../types';
+import styles from './WeekGrid.module.css';
 
 interface WeekGridProps {
   weekData: DayData[];
@@ -56,8 +57,8 @@ export default function WeekGrid({ weekData, events, isLoading, hasWeather }: We
   }, [handleWheel]);
 
   return (
-    <div className="week-grid" ref={scrollRef}>
-      <div className="week-grid__body">
+    <div className={styles.root} ref={scrollRef}>
+      <div className={styles.body}>
         <TimeGutter />
         {weekData.map((day) => {
           const dayEvents = events.filter((e) => e.date === day.date);
