@@ -62,7 +62,6 @@ export default function App() {
     clearCalendar,
   } = useCalendarEvents(weekStartDate);
 
-
   return (
     <ZoomProvider>
       <div className={styles.root}>
@@ -93,15 +92,23 @@ export default function App() {
               </div>
             </header>
             <div className={styles.mobileNav}>
-              <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onChange={setWeekStartDate} />
+              <DateRangePicker
+                label={formatDateRange(weekStartDate, data)}
+                weekStartDate={weekStartDate}
+                onChange={setWeekStartDate}
+              />
             </div>
           </>
         ) : (
           <header className={styles.desktopHeader}>
             <Logo size={36} />
             <h1 className={styles.title}>Weather Calendar</h1>
-            <DateRangePicker label={formatDateRange(weekStartDate, data)} weekStartDate={weekStartDate} onChange={setWeekStartDate} />
             <div className={styles.spacer} />
+            <DateRangePicker
+              label={formatDateRange(weekStartDate, data)}
+              weekStartDate={weekStartDate}
+              onChange={setWeekStartDate}
+            />
             <CalendarImport
               source={calSource}
               isRefreshing={isRefreshing}
@@ -127,12 +134,7 @@ export default function App() {
           </Alert>
         )}
 
-        <WeekGrid
-          weekData={data}
-          events={events}
-          hasWeather={hasWeather}
-          isMobile={isMobile}
-        />
+        <WeekGrid weekData={data} events={events} hasWeather={hasWeather} isMobile={isMobile} />
 
         {/* Loading toast — floats over the calendar */}
         {(isLoading || isRefreshing) && (

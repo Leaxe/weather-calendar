@@ -55,7 +55,6 @@
   pointer-events: none;
 }
 
-/* ===== Loading Shimmer ===== */
 /* ===== Weather Condition Overlays ===== */
 .wxOverlay {
   position: absolute;

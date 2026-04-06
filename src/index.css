@@ -62,11 +62,9 @@
 :root {
   /* Calendar app theme */
   --bg: #1a1a2e;
-  --bg-surface: #16213e;
   --text-primary: #e0e0e0;
   --text-secondary: #a0a0b0;
   --border-color: rgba(255, 255, 255, 0.08);
-  --border-color-strong: rgba(255, 255, 255, 0.15);
 
   /* Glass theme */
   --glass-bg: rgba(22, 33, 62, 0.7);
@@ -74,19 +72,15 @@
 
   /* Calendar layout */
   --gutter-width: 60px;
-  --header-height: 56px;
   --day-header-height: 72px;
 
   /* Calendar z-index scale */
-  --z-gridline: 1;
   --z-event-bg: 3;
   --z-weather-overlay: 4;
   --z-event-label: 5;
   --z-night-overlay: 6;
   --z-sun-marker: 7;
   --z-now-indicator: 8;
-  --z-loading-shimmer: 9;
-  --z-tooltip: 50;
 
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

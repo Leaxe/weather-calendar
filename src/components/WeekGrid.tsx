@@ -129,12 +129,7 @@ export default function WeekGrid({
         {weekData.map((day) => {
           const dayEvents = events.filter((e) => e.date === day.date);
           return (
-            <DayColumn
-              key={day.date}
-              dayData={day}
-              events={dayEvents}
-              hasWeather={hasWeather}
-            />
+            <DayColumn key={day.date} dayData={day} events={dayEvents} hasWeather={hasWeather} />
           );
         })}
       </div>

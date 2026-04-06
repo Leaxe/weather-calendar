@@ -22,7 +22,14 @@ interface LocationPickerProps {
   iconOnly?: boolean;
 }
 
-export default function LocationPicker({ location, onSelect, onClear, onRefresh, isRefreshing, iconOnly }: LocationPickerProps) {
+export default function LocationPicker({
+  location,
+  onSelect,
+  onClear,
+  onRefresh,
+  isRefreshing,
+  iconOnly,
+}: LocationPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeoLocation[]>([]);
@@ -65,7 +72,9 @@ export default function LocationPicker({ location, onSelect, onClear, onRefresh,
     <div className="flex items-center overflow-hidden rounded-md border border-white/10 bg-white/5 backdrop-blur-sm">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button className={`flex h-8 cursor-pointer items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'}`}>
+          <button
+            className={`flex h-8 cursor-pointer items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'}`}
+          >
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
             {!iconOnly && label}
           </button>

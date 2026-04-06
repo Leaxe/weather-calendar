@@ -1,97 +1,92 @@
 # Architecture — Module Reference
 
-**This is a living document. Any change that adds, removes, renames, or significantly alters a module's behavior should include an update to the relevant section here.**
-
 ## Domain Types (`types.ts`)
 
-All shared interfaces live here. Key types:
-- `HourlyData` — one hour's weather: temp, cloudCover, precipitation, snowfall, visibility, windSpeed, humidity
+All shared interfaces:
+- `HourlyData` — one hour's weather: temp, cloudCover, precipitation, snowfall, visibility, windSpeed, humidity, weatherCode
 - `DayData` — a day: date, dayName, sunrise/sunset times, 24 HourlyData entries
-- `CalendarEvent` — an event: id, title, day index, start/end hour
+- `CalendarEvent` — an event: id, title, date, start/end hour, optional location/description, isAllDay
 - `GeoLocation` — a city: name, lat/lon, country, optional admin1 (state/province)
-- `OverlayType` — `'cloud' | 'rain' | 'snow' | 'fog'`
+- `OverlayType` — `'cloud' | 'rain' | 'snow' | 'fog' | 'freezing_rain'`
 - `WeatherOverlay` — a type + 24-element intensity array
 
-## Data Layer (`data/`)
+## API Layer (`services/weatherApi.ts`)
 
-### `mockWeather.ts`
-Generates a week of weather data using keyframe-based cosine interpolation. Each day is defined by keyframes for each channel (cloud cover, precipitation, snowfall, visibility, etc.) and `interpolate()` smoothly fills in all 24 hours. The week tells a story: clear Mon → building clouds Tue → rain Wed → snow-to-rain Thu → clearing Fri → nice weekend.
-
-### `mockEvents.ts`
-Static array of `CalendarEvent` objects. Events are positioned by day index (0=Mon) and decimal start/end hours.
-
-## API Layer (`services/`)
-
-### `weatherApi.ts`
 Two functions for the Open-Meteo API (free, no key required):
 - `searchCities(query, signal?)` — geocoding search, returns `GeoLocation[]`
-- `fetchWeekForecast(lat, lon, signal?)` — 7-day hourly forecast, maps the API response into `DayData[]` matching the same types the mock data uses. Handles field renames (`temperature_2m→temp`, `cloud_cover→cloudCover`, etc.) and parses sunrise/sunset ISO strings into fractional hours.
+- `fetchWeekForecast(lat, lon, startDate, signal?)` — 7-day hourly forecast starting from a given date. Auto-splits between forecast API (future/today) and archive API (past). Handles field renames (`temperature_2m→temp`, `cloud_cover→cloudCover`, etc.) and parses sunrise/sunset ISO strings into fractional hours.
 
 ## Hooks (`hooks/`)
 
-### `useWeather.ts`
-React hook: `useWeather(location: GeoLocation | null) → { data, isLoading, error, source }`. When location is null, returns mock data. When set, fetches from the API with AbortController cleanup and a 60-second cache. Falls back to mock data on error.
+- **`useWeather.ts`** — `useWeather(location, weekStartDate)` → `{ data, hasWeather, isLoading, error, refresh }`. Fetches weather with AbortController cleanup and 60-second cache. `refresh()` clears cache and re-fetches. Auto-refreshes hourly. Returns placeholder data when no location set.
+- **`useCalendarEvents.ts`** — manages ICS calendar data in localStorage. ICS text is parsed once (via `parseICS`); filtering to the current week is a cheap array filter. URL-based calendars re-fetched on week change.
+- **`usePersistedLocation.ts`** — reads/writes `GeoLocation` to localStorage. Returns `[location, setLocation]`.
+- **`useIsMobile.ts`** — returns `true` when viewport < 768px.
 
-### `usePersistedLocation.ts`
-Reads/writes the selected `GeoLocation` to localStorage (`weather-calendar-location` key). Returns `[location, setLocation]` tuple.
+## Contexts (`contexts/`)
 
-## Color & Gradient Engine (`utils/`)
+- **`ZoomContext.tsx`** — provides `hourHeight` (30-150px), `setHourHeight`, `totalHeight`, `pixelToHour`. Used by WeekGrid for Ctrl/Cmd+scroll and pinch-to-zoom.
 
-### `colorScale.ts`
-Maps temperature → color using chroma.js bezier interpolation in LAB space. The 8 hue stops (blue→cyan→green→yellow→orange→red) are normalized at runtime to equal LAB lightness (`TARGET_L = 62`), ensuring weather overlays have uniform contrast across all temperatures. Night darkening is applied via `chroma.darken(1.8).desaturate(0.6)`.
+## Utils (`utils/`)
 
-### `gradientBuilder.ts`
-- `buildDayGradient()` — generates a CSS `linear-gradient` string from hourly data. Adds sub-hour interpolation points around sunrise/sunset and LAB-blended midpoints between all stops for smooth transitions.
-- `buildWeatherOverlays()` — converts 24 hours of numeric weather channels into per-type intensity arrays. Returns `WeatherOverlay[]` where each entry has a type and a 24-element float array.
+### Color & Gradient Engine
+- **`colorScale.ts`** — temp→color via chroma.js bezier interpolation in LAB space. 8 hue stops normalized to equal lightness (L=62). Night darkening via `chroma.darken(1.8).desaturate(0.6)`.
+- **`gradientBuilder.ts`** — `buildDayGradient()` generates CSS linear-gradient from hourly data with sub-hour interpolation and LAB-blended midpoints. `buildWeatherOverlays()` converts weather channels into per-type intensity arrays; precipitation bleeds 15% into neighboring dry hours. `getDarkness()` computes twilight with cosine transitions.
 
-### `noiseTextures.ts`
-Renders full-day (1440px tall) canvas textures for weather overlays. Uses a seeded PRNG (mulberry32) for reproducible randomness. Each overlay type has distinct rendering:
-- **Cloud/Fog**: Elliptical blobs with configurable stretch, multiple passes, blur via scale-down-then-up trick
-- **Rain**: Short diagonal lines at ~78° angle
-- **Snow**: Mix of 6-armed branching snowflakes (larger) and soft dots (smaller), with blur
+### Canvas Textures
+- **`noiseTextures.ts`** — renders full-day canvas textures using seeded PRNG (mulberry32). Cloud/fog: elliptical blobs, multiple passes, blur. Rain: gradient trails (transparent→opaque via `createLinearGradient`) with splash dots, quadratic density boost for heavy rain. Snow: 3 tiers — large 6-armed crystals with glow, medium crosses, small dots. Freezing rain: thicker/different angle. Intensity via smoothstep interpolation with half-hour offset. Density scales with zoom and column width. Cached by type+seed+zoom+width+intensities.
 
-Element density and alpha scale with `sampleIntensity()` which linearly interpolates the intensity curve at the exact y-position, giving smooth variation across hours.
-
-### `timeUtils.ts`
-Constants (`HOUR_HEIGHT = 60px`, `TOTAL_HEIGHT = 1440px`) and helpers for hour↔pixel conversion, time formatting, and condition display (maps numeric channels to dominant condition icon/label).
+### Other
+- **`icsParser.ts`** — parses ICS via `ical.js`, expands recurring events (≤500 occurrences), splits multi-day events. Optional date range bounds.
+- **`eventLayout.ts`** — overlap column layout for timed events (like Google Calendar).
+- **`dateUtils.ts`** — `todayStr()`, `addDays()`, `getSunday()`, `toLocalDateStr()`. All YYYY-MM-DD strings.
+- **`timeUtils.ts`** — hour formatting helpers (`formatHour`, `formatGutterHour`, `formatTimeRange`).
+- **`weatherConditions.ts`** — maps numeric weather channels to condition labels/icons for tooltip.
 
 ## Components
 
 ### Layout
-- `App.tsx` — holds `showDetails` state, wires `usePersistedLocation` + `useWeather` hooks, renders header (with LocationPicker + DetailToggle), loading/error banners, WeekHeader + WeekGrid
-- `WeekHeader.tsx` — day name, date number, high/low temp per column
-- `WeekGrid.tsx` — scrollable container with TimeGutter + 7 DayColumns, auto-scrolls to 7 AM
-- `TimeGutter.tsx` — left column with hour labels (12 AM–11 PM)
+- **`App.tsx`** — root. Desktop header: logo + title + DateRangePicker + CalendarImport + LocationPicker. Mobile: compact two-row header. Also renders error alert, WeekGrid, loading toast. Wrapped in ZoomProvider.
+- **`WeekGrid.tsx`** — scroll container with sticky WeekHeader + TimeGutter + 7 DayColumns. Auto-scrolls to 7 AM. Handles zoom gestures.
+- **`WeekHeader.tsx`** — sticky, glassmorphic. Day names, date numbers (blue circle for today), temp ranges.
+- **`TimeGutter.tsx`** — sticky left column with hour labels.
 
 ### Day Column (`DayColumn.tsx`)
-The core visual component. Renders:
-1. Temperature gradient background (full 1440px height)
-2. Hour gridlines
-3. Weather overlay divs (one per active overlay type, full-day canvas textures)
-4. Sunrise/sunset markers
-5. Current-time indicator (NowIndicator)
-6. Event cards
-7. Detail chips (when toggled)
-8. Mouse-following weather tooltip
+The core visual component. Renders in z-order:
+1. Placeholder background (solid color at default temp)
+2. Weather gradient + overlays + night darkening + sun markers (fade in together via CSS `@keyframes`, 1.5s)
+3. Hour gridlines
+4. Event card backgrounds (glassmorphic, z:3)
+5. Night overlay (z:6), sun markers (z:7), now indicator (z:8)
+6. Event card labels (z:9)
 
-### Supporting Components
-- `SunMarker.tsx` — glowing horizontal line at sunrise/sunset position
-- `NowIndicator.tsx` — red dot + line at simulated current time (Wed 10:30 AM)
-- `EventCard.tsx` — absolutely positioned card, sized by event duration
-- `WeatherTooltip.tsx` — cursor-following tooltip showing temp, condition, precip, wind, visibility
-- `DetailToggle.tsx` — shadcn Toggle button to pin weather detail chips on all columns
-- `LocationPicker.tsx` — city search dropdown in the header. Debounced input calls geocoding API, displays results, persists selection via parent callback. Uses shadcn Button + lucide icons (MapPin, Search, X).
+Column width tracked via ResizeObserver for texture generation.
+
+### Supporting
+- **`EventCard.tsx`** — `EventCardBackground` (glassmorphic card, z:3) + `EventCardLabel` (text, z:9)
+- **`WeatherTooltip.tsx`** — desktop: floating glassmorphic card. Mobile: bottom sheet. Both use `--glass-bg`/`--glass-border`.
+- **`SunMarker.tsx`** — glowing line + time label at sunrise/sunset
+- **`NowIndicator.tsx`** — red dot + line at current time, updates every 60s
+- **`Logo.tsx`** — SVG logo
+
+### Pickers
+- **`DateRangePicker.tsx`** — `[< | date range | >]` input group. Calendar popover with week selection (row hover, today button in footer). Weeks past forecast range disabled.
+- **`LocationPicker.tsx`** — city search (command palette), refresh (clears weather cache), clear.
+- **`CalendarImport.tsx`** — file drag-drop or URL paste, refresh, clear.
+
+All three use the same input group pattern: `border-white/10 bg-white/5 backdrop-blur-sm` container with `bg-border/50` dividers and `hover:bg-accent` buttons.
 
 ### UI Primitives (`components/ui/`)
-shadcn/ui components (Button, Toggle, Tooltip) — owned source files, styled with Tailwind + CSS variables.
+shadcn/ui components — owned source files, styled with Tailwind + CSS variables. Glass theme baked into `PopoverContent` and `TooltipContent` via `--glass-bg`/`--glass-border`. Calendar has transparent bg (inherits popover glass), week-row hover, borderless day buttons.
 
 ## Styling
 
-### `styles/global.css`
-Custom CSS for calendar-specific layout: grid structure, day column, gridlines, weather overlay positioning, sun markers, event cards, now indicator, scrollbar. Uses CSS custom properties for theming.
+### CSS Custom Properties (`index.css`)
+- `--bg`, `--text-primary`, `--text-secondary`, `--border-color` — base dark theme
+- `--glass-bg`, `--glass-border` — glassmorphism (popover, tooltip, header, toast)
+- `--z-event-bg` through `--z-now-indicator` — day column z-index scale
+- `--gutter-width`, `--day-header-height` — layout dimensions
+- shadcn HSL variables (`--primary`, `--accent`, `--popover`, etc.)
 
-### `index.css`
-Tailwind directives + shadcn/ui CSS variable definitions (light + dark themes). The app uses dark theme via `class="dark"` on `<html>`.
-
-### Tailwind
-Used for shadcn/ui components and the weather tooltip. Config in `tailwind.config.js` with shadcn theme extensions.
+### Approach
+CSS modules for calendar visuals (DayColumn, WeekHeader, EventCard, etc.). Tailwind for UI chrome (shadcn components, layout utilities). Glass theme centralized via CSS custom properties.
