@@ -148,10 +148,6 @@ export default function CalendarImport({
             </div>
 
             {error && <div className="text-xs text-destructive">{error}</div>}
-
-            <div className="text-[10px] text-muted-foreground/60">
-              Works with Google Calendar, Apple Calendar, Outlook, and any .ics export.
-            </div>
           </div>
         </PopoverContent>
       </Popover>

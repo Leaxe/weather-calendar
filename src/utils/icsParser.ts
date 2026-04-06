@@ -6,14 +6,19 @@ import { addDays, toLocalDateStr } from './dateUtils';
  * Parse an ICS string and return CalendarEvents within the given week range.
  * Handles recurring events (RRULE expansion) bounded to the visible week.
  */
-export function parseICS(icsText: string, weekStart: string, weekEnd: string): CalendarEvent[] {
+export function parseICS(icsText: string, weekStart?: string, weekEnd?: string): CalendarEvent[] {
   const jcal = ICAL.parse(icsText);
   const comp = new ICAL.Component(jcal);
   const vevents = comp.getAllSubcomponents('vevent');
   const events: CalendarEvent[] = [];
 
-  const rangeStart = new Date(weekStart + 'T00:00:00');
-  const rangeEnd = new Date(addDays(weekEnd, 1) + 'T00:00:00');
+  // Use a wide range when no week is specified (for pre-parsing all events)
+  const rangeStart = weekStart
+    ? new Date(weekStart + 'T00:00:00')
+    : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+  const rangeEnd = weekEnd
+    ? new Date(addDays(weekEnd, 1) + 'T00:00:00')
+    : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent);

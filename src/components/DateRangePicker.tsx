@@ -22,15 +22,12 @@ export default function DateRangePicker({
   const today = todayStr();
   const currentWeekStart = getSunday(today);
   const isCurrentWeek = weekStartDate === currentWeekStart;
-  const maxStart = addDays(today, 16);
   const nextWeekStart = addDays(weekStartDate, 7);
-  const isForwardDisabled = nextWeekStart > maxStart;
+  const nextWeekEnd = addDays(nextWeekStart, 6);
+  const lastForecastDay = addDays(today, 16);
+  const isForwardDisabled = nextWeekEnd > lastForecastDay;
 
   const midWeek = new Date(addDays(weekStartDate, 3) + 'T12:00:00');
-
-  // Last allowed week start: the Sunday of the week containing the last forecast day
-  const maxWeekStart = getSunday(addDays(today, 16));
-  const maxSaturday = new Date(addDays(maxWeekStart, 6) + 'T12:00:00');
 
   // Highlight the currently selected week (Sun–Sat)
   const selectedRange = useMemo(() => {
@@ -39,14 +36,14 @@ export default function DateRangePicker({
     return { from, to };
   }, [weekStartDate]);
 
-  // Disable days whose week extends past the forecast
+  // Disable days whose week's Saturday extends past the last forecast day
   const disabledMatcher = useCallback(
     (date: Date) => {
       const dateStr = toLocalDateStr(date);
       const weekEnd = addDays(getSunday(dateStr), 6);
-      return weekEnd > addDays(maxWeekStart, 6);
+      return weekEnd > lastForecastDay;
     },
-    [maxWeekStart],
+    [lastForecastDay],
   );
 
   const handleSelect = useCallback(
@@ -54,7 +51,7 @@ export default function DateRangePicker({
       if (date) {
         const dateStr = toLocalDateStr(date);
         onChange(getSunday(dateStr));
-        setOpen(false);
+        setTimeout(() => setOpen(false), 0);
       }
     },
     [onChange],
@@ -62,7 +59,7 @@ export default function DateRangePicker({
 
   const handleToday = useCallback(() => {
     onChange(currentWeekStart);
-    setOpen(false);
+    setTimeout(() => setOpen(false), 0);
   }, [onChange, currentWeekStart]);
 
   return (
@@ -92,7 +89,7 @@ export default function DateRangePicker({
             onDayClick={(day) => handleSelect(day)}
             defaultMonth={midWeek}
             disabled={disabledMatcher}
-            endMonth={maxSaturday}
+            endMonth={new Date(lastForecastDay + 'T12:00:00')}
             footer={
               <div className="-mx-3 -mb-3 border-t border-white/10 p-2">
                 <Button

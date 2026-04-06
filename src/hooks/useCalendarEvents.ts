@@ -47,15 +47,22 @@ export function useCalendarEvents(weekStartDate: string): UseCalendarEventsResul
 
   const weekEnd = useMemo(() => addDays(weekStartDate, 6), [weekStartDate]);
 
-  const events = useMemo(() => {
+  // Parse ICS only when the text changes, not on every week navigation
+  const allEvents = useMemo(() => {
     if (!icsText) return [];
     try {
-      return parseICS(icsText, weekStartDate, weekEnd);
+      return parseICS(icsText);
     } catch (e) {
       console.error('Failed to parse ICS:', e);
       return [];
     }
-  }, [icsText, weekStartDate, weekEnd]);
+  }, [icsText]);
+
+  // Filter to current week — cheap since allEvents is already parsed
+  const events = useMemo(() => {
+    if (allEvents.length === 0) return [];
+    return allEvents.filter((e) => e.date >= weekStartDate && e.date <= weekEnd);
+  }, [allEvents, weekStartDate, weekEnd]);
 
   // Re-fetch URL source on mount, week change, or manual refresh
   useEffect(() => {
