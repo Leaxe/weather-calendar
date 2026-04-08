@@ -5,13 +5,6 @@ export interface DragSelection {
   endHour: number;
 }
 
-export interface TooltipPosition {
-  x: number;
-  y: number;
-  flipX: boolean;
-  flipY: boolean;
-}
-
 interface DragState {
   anchor: number;
   current: number;
@@ -27,7 +20,6 @@ export function useDragSelection(
 ) {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [selection, setSelection] = useState<DragSelection | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition | null>(null);
   const isDragging = dragState !== null;
   const dragRef = useRef(dragState);
   useEffect(() => {
@@ -41,7 +33,6 @@ export function useDragSelection(
       const hour = snap15(pixelToHour(e.clientY - rect.top));
       setDragState({ anchor: hour, current: hour });
       setSelection(null);
-      setTooltipPosition(null);
     },
     [pixelToHour, colRef],
   );
@@ -56,35 +47,22 @@ export function useDragSelection(
     [pixelToHour, colRef],
   );
 
-  const handleDragEnd = useCallback(() => {
+  const handleDragEnd = useCallback((): DragSelection | null => {
     const ds = dragRef.current;
-    if (!ds) return;
+    if (!ds) return null;
     const lo = Math.max(0, Math.min(ds.anchor, ds.current));
     const hi = Math.min(24, Math.max(ds.anchor, ds.current));
-    if (hi - lo >= 0.25) {
-      setSelection({ startHour: lo, endHour: hi });
-      // Compute tooltip position from column rect
-      const el = colRef.current;
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        const gap = 12;
-        const flipX = rect.right > window.innerWidth - 280;
-        const midY = (rect.top + rect.bottom) / 2;
-        const flipY = midY > window.innerHeight * 0.75;
-        setTooltipPosition({
-          x: flipX ? rect.left - gap : rect.right + gap,
-          y: midY + (flipY ? -gap : gap),
-          flipX,
-          flipY,
-        });
-      }
-    }
     setDragState(null);
-  }, [colRef]);
+    if (hi - lo >= 0.25) {
+      const range = { startHour: lo, endHour: hi };
+      setSelection(range);
+      return range;
+    }
+    return null;
+  }, []);
 
   const clearSelection = useCallback(() => {
     setSelection(null);
-    setTooltipPosition(null);
     setDragState(null);
   }, []);
 
@@ -120,7 +98,6 @@ export function useDragSelection(
   return {
     isDragging,
     activeSelection,
-    tooltipPosition,
     handleDragStart,
     handleDragMove,
     handleDragEnd,

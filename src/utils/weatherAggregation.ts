@@ -4,7 +4,8 @@ import type { HourlyData } from '../types';
 export interface WeatherRangeSummary {
   totalPrecipitation: number;
   avgCloudCover: number;
-  avgTemp: number;
+  minTemp: number;
+  maxTemp: number;
   avgWindSpeed: number;
   dominantCondition: string;
   dominantIcon: string;
@@ -44,7 +45,8 @@ export function aggregateWeatherRange(
   let totalWeight = 0;
   let totalPrecip = 0;
   let weightedCloud = 0;
-  let weightedTemp = 0;
+  let minTemp = Infinity;
+  let maxTemp = -Infinity;
   let weightedWind = 0;
   let hasRain = false;
   let hasSnow = false;
@@ -64,7 +66,8 @@ export function aggregateWeatherRange(
     totalWeight += weight;
     totalPrecip += h.precipitation * weight;
     weightedCloud += h.cloudCover * weight;
-    weightedTemp += h.temp * weight;
+    if (h.temp < minTemp) minTemp = h.temp;
+    if (h.temp > maxTemp) maxTemp = h.temp;
     weightedWind += h.windSpeed * weight;
 
     codeTally.set(h.weatherCode, (codeTally.get(h.weatherCode) ?? 0) + weight);
@@ -77,7 +80,8 @@ export function aggregateWeatherRange(
     return {
       totalPrecipitation: 0,
       avgCloudCover: 0,
-      avgTemp: 0,
+      minTemp: 0,
+      maxTemp: 0,
       avgWindSpeed: 0,
       dominantCondition: 'Unknown',
       dominantIcon: '',
@@ -102,7 +106,8 @@ export function aggregateWeatherRange(
   return {
     totalPrecipitation: Math.round(totalPrecip * 100) / 100,
     avgCloudCover: Math.round(weightedCloud / totalWeight),
-    avgTemp: Math.round(weightedTemp / totalWeight),
+    minTemp: Math.round(minTemp),
+    maxTemp: Math.round(maxTemp),
     avgWindSpeed: Math.round((weightedWind / totalWeight) * 10) / 10,
     dominantCondition: wmoConditionLabel(dominantCode),
     dominantIcon: wmoConditionIcon(dominantCode, isNight),

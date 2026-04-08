@@ -13,34 +13,78 @@ import { computeEventLayout } from '../utils/eventLayout';
 import { aggregateWeatherRange } from '../utils/weatherAggregation';
 import { useDragSelection } from '../hooks/useDragSelection';
 import type { DayData, CalendarEvent, HourlyData } from '../types';
+import type { WeatherRangeSummary } from '../utils/weatherAggregation';
 import styles from './DayColumn.module.css';
+
+interface TooltipPosition {
+  x: number;
+  y: number;
+  flipX: boolean;
+  flipY: boolean;
+}
 
 interface TooltipState {
   hourData: HourlyData;
   hour: number;
-  position: { x: number; y: number; flipX: boolean; flipY: boolean };
-}
-
-interface DayColumnProps {
-  dayData: DayData;
-  events: CalendarEvent[];
-  hasWeather?: boolean;
+  position: TooltipPosition;
 }
 
 interface HoveredEventState {
   event: CalendarEvent;
   hourData: HourlyData;
   hour: number;
-  position: { x: number; y: number; flipX: boolean; flipY: boolean };
+  position: TooltipPosition;
 }
 
-export default function DayColumn({ dayData, events, hasWeather }: DayColumnProps) {
+/** Data passed to parent for the bottom banner */
+export interface PinnedTooltipData {
+  dayData: DayData;
+  hourData?: HourlyData;
+  hour?: number;
+  event?: CalendarEvent;
+  eventSummary?: WeatherRangeSummary;
+  rangeStartHour?: number;
+  rangeEndHour?: number;
+}
+
+interface DayColumnProps {
+  dayData: DayData;
+  events: CalendarEvent[];
+  hasWeather?: boolean;
+  hasPinnedTooltip?: boolean;
+  onPinTooltip?: (data: PinnedTooltipData) => void;
+  onDismissTooltip?: () => void;
+}
+
+function computePosition(clientX: number, clientY: number): TooltipPosition {
+  const gap = 12;
+  const flipX = clientX > window.innerWidth - 280;
+  const flipY = clientY > window.innerHeight * 0.75;
+  return {
+    x: clientX + (flipX ? -gap : gap),
+    y: clientY + (flipY ? -gap : gap),
+    flipX,
+    flipY,
+  };
+}
+
+export default function DayColumn({
+  dayData,
+  events,
+  hasWeather,
+  hasPinnedTooltip,
+  onPinTooltip,
+  onDismissTooltip,
+}: DayColumnProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<HoveredEventState | null>(null);
   const suppressTooltipRef = useRef(false);
   const colRef = useRef<HTMLDivElement>(null);
+  const mouseDownRef = useRef<{ x: number; y: number } | null>(null);
   const touchRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const recentTouchRef = useRef(false);
   const { totalHeight, hourHeight, pixelToHour } = useZoom();
+  const canHover = window.matchMedia('(hover: hover)').matches;
 
   const placeholderColor = useMemo(() => weatherToColor(20, 0), []);
   const gradient = useMemo(
@@ -52,10 +96,10 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
   const timedEvents = useMemo(() => events.filter((e) => !e.isAllDay), [events]);
   const eventLayout = useMemo(() => computeEventLayout(timedEvents), [timedEvents]);
 
-  const getHourFromMouseEvent = useCallback(
-    (e: React.MouseEvent) => {
+  const getHourAtY = useCallback(
+    (clientY: number) => {
       const rect = colRef.current!.getBoundingClientRect();
-      const gradientY = e.clientY - rect.top;
+      const gradientY = clientY - rect.top;
       const hour = pixelToHour(gradientY);
       const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
       return { hour, hourIndex, hourData: dayData.hourly[hourIndex] };
@@ -63,63 +107,95 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
     [dayData, pixelToHour],
   );
 
+  // Helper to pin a tooltip via parent
+  const pinTooltip = useCallback(
+    (clientY: number, event?: CalendarEvent) => {
+      if (!colRef.current || !onPinTooltip) return;
+      const { hour, hourData } = getHourAtY(clientY);
+      const data: PinnedTooltipData = {
+        hourData,
+        hour,
+        dayData,
+      };
+      if (event) {
+        data.event = event;
+        data.eventSummary = aggregateWeatherRange(
+          dayData.hourly,
+          event.startHour,
+          event.endHour,
+          dayData.sunrise,
+          dayData.sunset,
+        );
+      }
+      onPinTooltip(data);
+    },
+    [dayData, getHourAtY, onPinTooltip],
+  );
+
   // Event hover callbacks
   const handleEventHoverStart = useCallback(
     (event: CalendarEvent, _rect: DOMRect, e: React.MouseEvent) => {
       suppressTooltipRef.current = true;
       setTooltip(null);
-
-      const { hour, hourData } = getHourFromMouseEvent(e);
-      const gap = 12;
-      const flipX = e.clientX > window.innerWidth - 280;
-      const flipY = e.clientY > window.innerHeight * 0.75;
-
+      const { hour, hourData } = getHourAtY(e.clientY);
       setHoveredEvent({
         event,
         hourData,
         hour,
-        position: {
-          x: e.clientX + (flipX ? -gap : gap),
-          y: e.clientY + (flipY ? -gap : gap),
-          flipX,
-          flipY,
-        },
+        position: computePosition(e.clientX, e.clientY),
       });
     },
-    [getHourFromMouseEvent],
+    [getHourAtY],
   );
 
   const handleEventHoverMove = useCallback(
     (e: React.MouseEvent) => {
       if (!hoveredEvent) return;
-      const { hour, hourData } = getHourFromMouseEvent(e);
-      const gap = 12;
-      const flipX = e.clientX > window.innerWidth - 280;
-      const flipY = e.clientY > window.innerHeight * 0.75;
-
+      const { hour, hourData } = getHourAtY(e.clientY);
       setHoveredEvent((prev) =>
         prev
           ? {
               ...prev,
               hourData,
               hour,
-              position: {
-                x: e.clientX + (flipX ? -gap : gap),
-                y: e.clientY + (flipY ? -gap : gap),
-                flipX,
-                flipY,
-              },
+              position: computePosition(e.clientX, e.clientY),
             }
           : null,
       );
     },
-    [hoveredEvent, getHourFromMouseEvent],
+    [hoveredEvent, getHourAtY],
   );
 
   const handleEventHoverEnd = useCallback(() => {
     suppressTooltipRef.current = false;
     setHoveredEvent(null);
   }, []);
+
+  // Click on event — toggle pinned tooltip
+  const handleEventClick = useCallback(
+    (event: CalendarEvent, e: React.MouseEvent | React.TouchEvent) => {
+      // Skip synthesized click after touch
+      if ('clientX' in e && recentTouchRef.current) return;
+
+      // If this is a touch event, set the flag to block synthesized mouse events
+      if (!('clientX' in e)) {
+        recentTouchRef.current = true;
+        setTimeout(() => {
+          recentTouchRef.current = false;
+        }, 500);
+      }
+
+      if (hasPinnedTooltip) {
+        onDismissTooltip?.();
+        return;
+      }
+      const clientY = 'clientX' in e ? e.clientY : e.changedTouches[0].clientY;
+      pinTooltip(clientY, event);
+      setHoveredEvent(null);
+      suppressTooltipRef.current = false;
+    },
+    [hasPinnedTooltip, onDismissTooltip, pinTooltip],
+  );
 
   const hoveredEventSummary = useMemo(() => {
     if (!hoveredEvent) return null;
@@ -136,40 +212,37 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
   const {
     isDragging,
     activeSelection,
-    tooltipPosition: dragTooltipPosition,
     handleDragStart,
     handleDragMove,
     handleDragEnd,
     clearSelection,
   } = useDragSelection(pixelToHour, colRef);
 
-  const dragSummary = useMemo(() => {
-    if (!activeSelection || activeSelection.endHour - activeSelection.startHour < 0.25) return null;
-    return aggregateWeatherRange(
-      dayData.hourly,
-      activeSelection.startHour,
-      activeSelection.endHour,
-      dayData.sunrise,
-      dayData.sunset,
-    );
-  }, [activeSelection, dayData]);
-
-  // Unsuppress weather tooltip when drag selection is cleared
+  // Unsuppress weather tooltip when drag ends
   useEffect(() => {
-    if (!isDragging && !activeSelection) {
+    if (!isDragging) {
       suppressTooltipRef.current = false;
     }
-  }, [isDragging, activeSelection]);
+  }, [isDragging]);
 
-  // Night darkening overlay — a gradient of semi-transparent black matching the twilight curve
+  // Clear ghost selection when banner is dismissed
+  const prevPinnedRef = useRef(false);
+  useEffect(() => {
+    if (prevPinnedRef.current && !hasPinnedTooltip) {
+      clearSelection();
+    }
+    prevPinnedRef.current = !!hasPinnedTooltip;
+  }, [hasPinnedTooltip, clearSelection]);
+
+  // Night darkening overlay
   const nightOverlay = useMemo(() => {
     const { sunrise, sunset } = dayData;
     const stops: string[] = [];
-    const steps = 48; // every 30 min
+    const steps = 48;
     for (let i = 0; i <= steps; i++) {
       const h = (i / steps) * 24;
       const darkness = getDarkness(h, sunrise, sunset);
-      const alpha = darkness * 0.25; // max 25% black at full night
+      const alpha = darkness * 0.25;
       const pct = ((h / 24) * 100).toFixed(1);
       stops.push(`rgba(0,0,0,${alpha.toFixed(3)}) ${pct}%`);
     }
@@ -178,39 +251,27 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      // Forward drag move if dragging
+      if (recentTouchRef.current) return;
       if (isDragging) {
         handleDragMove(e);
         return;
       }
-
       if (suppressTooltipRef.current) return;
 
-      const { hour, hourData } = getHourFromMouseEvent(e);
-
-      // Tooltip positioned in viewport-fixed coordinates via position:fixed
-      // Flip horizontally/vertically to stay within viewport
-      const gap = 12;
-      const flipX = e.clientX > window.innerWidth - 240;
-      const flipY = e.clientY > window.innerHeight * 0.75;
-
+      const { hour, hourData } = getHourAtY(e.clientY);
       setTooltip({
         hourData,
         hour,
-        position: {
-          x: e.clientX + (flipX ? -gap : gap),
-          y: e.clientY + (flipY ? -gap : gap),
-          flipX,
-          flipY,
-        },
+        position: computePosition(e.clientX, e.clientY),
       });
     },
-    [getHourFromMouseEvent, isDragging, handleDragMove],
+    [getHourAtY, isDragging, handleDragMove],
   );
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!hasWeather) return;
+      if (!hasWeather || recentTouchRef.current) return;
+      mouseDownRef.current = { x: e.clientX, y: e.clientY };
       clearSelection();
       suppressTooltipRef.current = true;
       setTooltip(null);
@@ -219,10 +280,51 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
     [hasWeather, handleDragStart, clearSelection],
   );
 
-  const handleMouseUp = useCallback(() => {
-    if (!isDragging) return;
-    handleDragEnd();
-  }, [isDragging, handleDragEnd]);
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const downPos = mouseDownRef.current;
+      mouseDownRef.current = null;
+
+      if (!downPos) return;
+      const finalizedRange = handleDragEnd();
+
+      const dx = Math.abs(e.clientX - downPos.x);
+      const dy = Math.abs(e.clientY - downPos.y);
+      if (dx < 5 && dy < 5) {
+        // Click (not drag) → toggle banner
+        clearSelection();
+        if (hasPinnedTooltip) {
+          onDismissTooltip?.();
+        } else {
+          pinTooltip(e.clientY);
+        }
+      } else if (finalizedRange) {
+        // Drag completed → pin range summary to banner
+        const summary = aggregateWeatherRange(
+          dayData.hourly,
+          finalizedRange.startHour,
+          finalizedRange.endHour,
+          dayData.sunrise,
+          dayData.sunset,
+        );
+        onPinTooltip?.({
+          dayData,
+          eventSummary: summary,
+          rangeStartHour: finalizedRange.startHour,
+          rangeEndHour: finalizedRange.endHour,
+        });
+      }
+    },
+    [
+      handleDragEnd,
+      clearSelection,
+      hasPinnedTooltip,
+      onDismissTooltip,
+      pinTooltip,
+      dayData,
+      onPinTooltip,
+    ],
+  );
 
   const handleMouseLeave = useCallback(() => {
     setTooltip(null);
@@ -231,6 +333,7 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
     }
   }, [isDragging, handleDragEnd]);
 
+  // Touch: tap to pin tooltip
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     const touch = e.touches[0];
     touchRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
@@ -247,45 +350,21 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
 
       if (dt > 300 || dx > 10 || dy > 10) return;
 
-      // If tooltip is already showing, dismiss it
-      if (tooltip) {
-        setTooltip(null);
+      // Prevent synthesized mouse events from firing after touch
+      recentTouchRef.current = true;
+      setTimeout(() => {
+        recentTouchRef.current = false;
+      }, 500);
+
+      if (hasPinnedTooltip) {
+        onDismissTooltip?.();
         return;
       }
 
-      const rect = colRef.current.getBoundingClientRect();
-      const gradientY = touch.clientY - rect.top;
-      const hour = pixelToHour(gradientY);
-      const hourIndex = Math.max(0, Math.min(23, Math.floor(hour)));
-      const hourData = dayData.hourly[hourIndex];
-
-      setTooltip({
-        hourData,
-        hour,
-        position: {
-          x: touch.clientX,
-          y: touch.clientY,
-          flipX: false,
-          flipY: false,
-        },
-      });
+      pinTooltip(touch.clientY);
     },
-    [dayData, pixelToHour, tooltip],
+    [hasPinnedTooltip, onDismissTooltip, pinTooltip],
   );
-
-  // Dismiss tooltip on any outside touch
-  useEffect(() => {
-    if (!tooltip) return;
-    const dismiss = () => setTooltip(null);
-    // Use a timeout so the current touch end doesn't immediately dismiss
-    const timer = setTimeout(() => {
-      document.addEventListener('touchstart', dismiss, { once: true });
-    }, 50);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('touchstart', dismiss);
-    };
-  }, [tooltip]);
 
   // Track column width for texture rendering
   const [colWidth, setColWidth] = useState(200);
@@ -300,7 +379,6 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
     return () => ro.disconnect();
   }, []);
 
-  // Derive a stable seed from the date string
   const daySeed = useMemo(() => {
     let hash = 0;
     for (let i = 0; i < dayData.date.length; i++) {
@@ -314,10 +392,10 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
       className={styles.root}
       ref={colRef}
       style={isDragging ? { userSelect: 'none' } : undefined}
-      onMouseDown={hasWeather ? handleMouseDown : undefined}
-      onMouseMove={hasWeather ? handleMouseMove : undefined}
-      onMouseUp={hasWeather ? handleMouseUp : undefined}
-      onMouseLeave={hasWeather ? handleMouseLeave : undefined}
+      onMouseDown={hasWeather && canHover ? handleMouseDown : undefined}
+      onMouseMove={hasWeather && canHover ? handleMouseMove : undefined}
+      onMouseUp={hasWeather && canHover ? handleMouseUp : undefined}
+      onMouseLeave={hasWeather && canHover ? handleMouseLeave : undefined}
       onTouchStart={hasWeather ? handleTouchStart : undefined}
       onTouchEnd={hasWeather ? handleTouchEnd : undefined}
     >
@@ -360,9 +438,10 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
             key={`bg-${event.id}`}
             event={event}
             layout={eventLayout.get(event.id)}
-            onHoverStart={hasWeather ? handleEventHoverStart : undefined}
-            onHoverMove={hasWeather ? handleEventHoverMove : undefined}
-            onHoverEnd={hasWeather ? handleEventHoverEnd : undefined}
+            onHoverStart={hasWeather && canHover ? handleEventHoverStart : undefined}
+            onHoverMove={hasWeather && canHover ? handleEventHoverMove : undefined}
+            onHoverEnd={hasWeather && canHover ? handleEventHoverEnd : undefined}
+            onEventClick={hasWeather ? handleEventClick : undefined}
           />
         ))}
 
@@ -396,45 +475,29 @@ export default function DayColumn({ dayData, events, hasWeather }: DayColumnProp
         ))}
       </div>
 
-      {/* Tooltip — only with weather */}
-      {hasWeather && tooltip && (
-        <WeatherTooltip
-          hourData={tooltip.hourData}
-          hour={tooltip.hour}
-          sunrise={dayData.sunrise}
-          sunset={dayData.sunset}
-          position={tooltip.position}
-        />
-      )}
-
-      {/* Event weather tooltip */}
-      {hasWeather && hoveredEvent && hoveredEventSummary && (
-        <WeatherTooltip
-          hourData={hoveredEvent.hourData}
-          hour={hoveredEvent.hour}
-          sunrise={dayData.sunrise}
-          sunset={dayData.sunset}
-          position={hoveredEvent.position}
-          rangeTitle={hoveredEvent.event.title}
-          rangeStartHour={hoveredEvent.event.startHour}
-          rangeEndHour={hoveredEvent.event.endHour}
-          rangeSummary={hoveredEventSummary}
-        />
-      )}
-
-      {/* Ghost event weather tooltip */}
-      {hasWeather && !isDragging && activeSelection && dragSummary && dragTooltipPosition && (
-        <WeatherTooltip
-          hourData={dayData.hourly[Math.floor(activeSelection.startHour)] ?? dayData.hourly[0]}
-          hour={activeSelection.startHour}
-          sunrise={dayData.sunrise}
-          sunset={dayData.sunset}
-          position={dragTooltipPosition}
-          rangeStartHour={activeSelection.startHour}
-          rangeEndHour={activeSelection.endHour}
-          rangeSummary={dragSummary}
-        />
-      )}
+      {/* Hover tooltip — desktop only, independent of banner */}
+      {hasWeather &&
+        (hoveredEvent && hoveredEventSummary ? (
+          <WeatherTooltip
+            hourData={hoveredEvent.hourData}
+            hour={hoveredEvent.hour}
+            sunrise={dayData.sunrise}
+            sunset={dayData.sunset}
+            position={hoveredEvent.position}
+            rangeTitle={hoveredEvent.event.title}
+            rangeStartHour={hoveredEvent.event.startHour}
+            rangeEndHour={hoveredEvent.event.endHour}
+            rangeSummary={hoveredEventSummary}
+          />
+        ) : tooltip ? (
+          <WeatherTooltip
+            hourData={tooltip.hourData}
+            hour={tooltip.hour}
+            sunrise={dayData.sunrise}
+            sunset={dayData.sunset}
+            position={tooltip.position}
+          />
+        ) : null)}
     </div>
   );
 }

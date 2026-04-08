@@ -20,10 +20,12 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.card:hover {
-  background: hsl(var(--accent) / 0.6);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+@media (hover: hover) {
+  .card:hover {
+    background: hsl(var(--accent) / 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* Event label — above weather but below night */

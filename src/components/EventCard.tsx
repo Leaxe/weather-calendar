@@ -10,6 +10,7 @@ interface EventCardProps {
   onHoverStart?: (event: CalendarEvent, rect: DOMRect, e: React.MouseEvent) => void;
   onHoverMove?: (e: React.MouseEvent) => void;
   onHoverEnd?: () => void;
+  onEventClick?: (event: CalendarEvent, e: React.MouseEvent | React.TouchEvent) => void;
 }
 
 function useEventPosition(event: CalendarEvent, layout?: EventLayout) {
@@ -40,6 +41,7 @@ export function EventCardBackground({
   onHoverStart,
   onHoverMove,
   onHoverEnd,
+  onEventClick,
 }: EventCardProps) {
   const pos = useEventPosition(event, layout);
 
@@ -63,6 +65,17 @@ export function EventCardBackground({
       onMouseMove={onHoverMove}
       onMouseLeave={onHoverEnd}
       onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+      onClick={onEventClick ? (e) => onEventClick(event, e) : undefined}
+      onTouchEnd={
+        onEventClick
+          ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEventClick(event, e);
+            }
+          : undefined
+      }
     />
   );
 }

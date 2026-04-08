@@ -1,7 +1,9 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import TimeGutter from './TimeGutter';
 import DayColumn from './DayColumn';
+import type { PinnedTooltipData } from './DayColumn';
 import WeekHeader from './WeekHeader';
+import { WeatherSummaryContent } from './WeatherTooltip';
 import { useZoom } from '../contexts/ZoomContext';
 import type { DayData, CalendarEvent } from '../types';
 import styles from './WeekGrid.module.css';
@@ -24,6 +26,32 @@ export default function WeekGrid({
   const scrollRef = useRef<HTMLDivElement>(null);
   const { hourHeight, setHourHeight } = useZoom();
   const pinchRef = useRef<{ startDist: number; startHeight: number } | null>(null);
+
+  // Bottom banner state
+  const [bannerData, setBannerData] = useState<PinnedTooltipData | null>(null);
+
+  const handlePinTooltip = useCallback((data: PinnedTooltipData) => {
+    setBannerData(data);
+  }, []);
+
+  const handleDismissTooltip = useCallback(() => {
+    setBannerData(null);
+  }, []);
+
+  // Dismiss banner on Escape
+  useEffect(() => {
+    if (!bannerData) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBannerData(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [bannerData]);
+
+  // Clear banner when week data changes
+  useEffect(() => {
+    setBannerData(null);
+  }, [weekData]);
 
   // Auto-scroll to ~7 AM on mount
   useEffect(() => {
@@ -50,7 +78,6 @@ export default function WeekGrid({
       const newHeight = Math.max(30, Math.min(150, hourHeight + delta));
       setHourHeight(newHeight);
 
-      // Restore scroll so the hour at cursor stays at the same viewport position
       requestAnimationFrame(() => {
         container.scrollTop = hourAtCursor * newHeight - cursorY;
       });
@@ -129,10 +156,47 @@ export default function WeekGrid({
         {weekData.map((day) => {
           const dayEvents = events.filter((e) => e.date === day.date);
           return (
-            <DayColumn key={day.date} dayData={day} events={dayEvents} hasWeather={hasWeather} />
+            <DayColumn
+              key={day.date}
+              dayData={day}
+              events={dayEvents}
+              hasWeather={hasWeather}
+              hasPinnedTooltip={!!bannerData}
+              onPinTooltip={handlePinTooltip}
+              onDismissTooltip={handleDismissTooltip}
+            />
           );
         })}
       </div>
+
+      {/* Bottom banner — click/tap weather detail */}
+      {bannerData && (
+        <div className="sticky bottom-0 z-50 border-t border-[--glass-border] bg-[--glass-bg] px-4 py-3 shadow-lg backdrop-blur-[12px] saturate-[1.2]">
+          <WeatherSummaryContent
+            hourData={bannerData.hourData}
+            hour={bannerData.hour}
+            sunrise={bannerData.dayData.sunrise}
+            sunset={bannerData.dayData.sunset}
+            dayName={bannerData.dayData.dayName}
+            {...(bannerData.event && bannerData.eventSummary
+              ? {
+                  rangeTitle: bannerData.event.title,
+                  rangeStartHour: bannerData.event.startHour,
+                  rangeEndHour: bannerData.event.endHour,
+                  rangeSummary: bannerData.eventSummary,
+                }
+              : bannerData.rangeStartHour !== undefined &&
+                  bannerData.rangeEndHour !== undefined &&
+                  bannerData.eventSummary
+                ? {
+                    rangeStartHour: bannerData.rangeStartHour,
+                    rangeEndHour: bannerData.rangeEndHour,
+                    rangeSummary: bannerData.eventSummary,
+                  }
+                : {})}
+          />
+        </div>
+      )}
     </div>
   );
 }
