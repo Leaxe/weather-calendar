@@ -43,6 +43,7 @@ function icsProxyPlugin(): Plugin {
 }
 
 export default defineConfig({
+  base: '/weather-calendar/',
   plugins: [react(), icsProxyPlugin()],
   resolve: {
     alias: {
