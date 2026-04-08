@@ -209,14 +209,8 @@ export default function DayColumn({
   }, [hoveredEvent, dayData]);
 
   // Drag selection for ghost events
-  const {
-    isDragging,
-    activeSelection,
-    handleDragStart,
-    handleDragMove,
-    handleDragEnd,
-    clearSelection,
-  } = useDragSelection(pixelToHour, colRef);
+  const { isDragging, activeSelection, startDrag, updateDrag, endDrag, clearSelection } =
+    useDragSelection(pixelToHour, colRef);
 
   // Unsuppress weather tooltip when drag ends
   useEffect(() => {
@@ -253,7 +247,7 @@ export default function DayColumn({
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (recentTouchRef.current) return;
       if (isDragging) {
-        handleDragMove(e);
+        updateDrag(e.clientY);
         return;
       }
       if (suppressTooltipRef.current) return;
@@ -265,7 +259,7 @@ export default function DayColumn({
         position: computePosition(e.clientX, e.clientY),
       });
     },
-    [getHourAtY, isDragging, handleDragMove],
+    [getHourAtY, isDragging, updateDrag],
   );
 
   const handleMouseDown = useCallback(
@@ -275,10 +269,30 @@ export default function DayColumn({
       clearSelection();
       suppressTooltipRef.current = true;
       setTooltip(null);
-      handleDragStart(e);
+      startDrag(e.clientY);
     },
-    [hasWeather, handleDragStart, clearSelection],
+    [hasWeather, startDrag, clearSelection],
   );
+
+  /** Shared logic for finalizing a drag and pinning the range to the banner */
+  const finalizeDrag = useCallback((): boolean => {
+    const finalizedRange = endDrag();
+    if (!finalizedRange) return false;
+    const summary = aggregateWeatherRange(
+      dayData.hourly,
+      finalizedRange.startHour,
+      finalizedRange.endHour,
+      dayData.sunrise,
+      dayData.sunset,
+    );
+    onPinTooltip?.({
+      dayData,
+      eventSummary: summary,
+      rangeStartHour: finalizedRange.startHour,
+      rangeEndHour: finalizedRange.endHour,
+    });
+    return true;
+  }, [endDrag, dayData, onPinTooltip]);
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -286,62 +300,111 @@ export default function DayColumn({
       mouseDownRef.current = null;
 
       if (!downPos) return;
-      const finalizedRange = handleDragEnd();
 
       const dx = Math.abs(e.clientX - downPos.x);
       const dy = Math.abs(e.clientY - downPos.y);
       if (dx < 5 && dy < 5) {
         // Click (not drag) → toggle banner
+        endDrag();
         clearSelection();
         if (hasPinnedTooltip) {
           onDismissTooltip?.();
         } else {
           pinTooltip(e.clientY);
         }
-      } else if (finalizedRange) {
-        // Drag completed → pin range summary to banner
-        const summary = aggregateWeatherRange(
-          dayData.hourly,
-          finalizedRange.startHour,
-          finalizedRange.endHour,
-          dayData.sunrise,
-          dayData.sunset,
-        );
-        onPinTooltip?.({
-          dayData,
-          eventSummary: summary,
-          rangeStartHour: finalizedRange.startHour,
-          rangeEndHour: finalizedRange.endHour,
-        });
+      } else {
+        finalizeDrag();
       }
     },
-    [
-      handleDragEnd,
-      clearSelection,
-      hasPinnedTooltip,
-      onDismissTooltip,
-      pinTooltip,
-      dayData,
-      onPinTooltip,
-    ],
+    [endDrag, clearSelection, hasPinnedTooltip, onDismissTooltip, pinTooltip, finalizeDrag],
   );
 
   const handleMouseLeave = useCallback(() => {
     setTooltip(null);
     if (isDragging) {
-      handleDragEnd();
+      endDrag();
     }
-  }, [isDragging, handleDragEnd]);
+  }, [isDragging, endDrag]);
 
-  // Touch: tap to pin tooltip
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const touch = e.touches[0];
-    touchRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-  }, []);
+  // Touch: tap to pin banner, long-press + drag for ghost events
+  // Uses native listeners so touchmove can be non-passive (required for preventDefault)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchDraggingRef = useRef(false);
+  const touchCallbacksRef = useRef({
+    clearSelection,
+    startDrag,
+    updateDrag,
+    finalizeDrag,
+    pinTooltip,
+    hasPinnedTooltip,
+    onDismissTooltip,
+  });
+  useEffect(() => {
+    touchCallbacksRef.current = {
+      clearSelection,
+      startDrag,
+      updateDrag,
+      finalizeDrag,
+      pinTooltip,
+      hasPinnedTooltip,
+      onDismissTooltip,
+    };
+  });
 
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
-      if (!touchRef.current || !colRef.current) return;
+  useEffect(() => {
+    if (!hasWeather) return;
+    const el = colRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      touchRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+      touchDraggingRef.current = false;
+
+      longPressTimerRef.current = setTimeout(() => {
+        if (!touchRef.current) return;
+        touchDraggingRef.current = true;
+        touchCallbacksRef.current.clearSelection();
+        touchCallbacksRef.current.startDrag(touchRef.current.y);
+        navigator.vibrate?.(30);
+      }, 400);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchRef.current) return;
+      const touch = e.touches[0];
+
+      if (touchDraggingRef.current) {
+        e.preventDefault();
+        touchCallbacksRef.current.updateDrag(touch.clientY);
+        return;
+      }
+
+      // If finger moved before long-press fired, cancel (user is scrolling)
+      const dx = Math.abs(touch.clientX - touchRef.current.x);
+      const dy = Math.abs(touch.clientY - touchRef.current.y);
+      if (dx > 10 || dy > 10) {
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+
+      if (touchDraggingRef.current) {
+        touchDraggingRef.current = false;
+        touchCallbacksRef.current.finalizeDrag();
+        touchRef.current = null;
+        return;
+      }
+
+      if (!touchRef.current) return;
       const touch = e.changedTouches[0];
       const dt = Date.now() - touchRef.current.time;
       const dx = Math.abs(touch.clientX - touchRef.current.x);
@@ -350,21 +413,28 @@ export default function DayColumn({
 
       if (dt > 300 || dx > 10 || dy > 10) return;
 
-      // Prevent synthesized mouse events from firing after touch
       recentTouchRef.current = true;
       setTimeout(() => {
         recentTouchRef.current = false;
       }, 500);
 
-      if (hasPinnedTooltip) {
-        onDismissTooltip?.();
+      const cb = touchCallbacksRef.current;
+      if (cb.hasPinnedTooltip) {
+        cb.onDismissTooltip?.();
         return;
       }
+      cb.pinTooltip(touch.clientY);
+    };
 
-      pinTooltip(touch.clientY);
-    },
-    [hasPinnedTooltip, onDismissTooltip, pinTooltip],
-  );
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [hasWeather]);
 
   // Track column width for texture rendering
   const [colWidth, setColWidth] = useState(200);
@@ -391,13 +461,10 @@ export default function DayColumn({
     <div
       className={styles.root}
       ref={colRef}
-      style={isDragging ? { userSelect: 'none' } : undefined}
       onMouseDown={hasWeather && canHover ? handleMouseDown : undefined}
       onMouseMove={hasWeather && canHover ? handleMouseMove : undefined}
       onMouseUp={hasWeather && canHover ? handleMouseUp : undefined}
       onMouseLeave={hasWeather && canHover ? handleMouseLeave : undefined}
-      onTouchStart={hasWeather ? handleTouchStart : undefined}
-      onTouchEnd={hasWeather ? handleTouchEnd : undefined}
     >
       <div
         className={styles.container}

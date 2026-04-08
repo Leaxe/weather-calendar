@@ -6,6 +6,9 @@
   cursor: crosshair;
   overflow: visible;
   min-width: 0;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .root:last-child {

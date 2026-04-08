@@ -1,5 +1,5 @@
 import { useZoom } from '../contexts/ZoomContext';
-import { formatTimeRange } from '../utils/timeUtils';
+import { formatHour } from '../utils/timeUtils';
 import styles from './GhostEvent.module.css';
 
 interface GhostEventProps {
@@ -17,7 +17,11 @@ export default function GhostEvent({ startHour, endHour }: GhostEventProps) {
   return (
     <div className={styles.ghost} style={{ top, height }}>
       {height >= 24 && (
-        <span className={styles.timeLabel}>{formatTimeRange(startHour, endHour)}</span>
+        <div className={styles.timeLabel}>
+          <span>{formatHour(startHour)}</span>
+          <span className={styles.timeSep}>–</span>
+          <span>{formatHour(endHour)}</span>
+        </div>
       )}
     </div>
   );

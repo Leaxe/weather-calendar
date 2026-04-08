@@ -26,28 +26,37 @@ export function useDragSelection(
     dragRef.current = dragState;
   }, [dragState]);
 
-  const handleDragStart = useCallback(
-    (e: React.MouseEvent) => {
-      if (!colRef.current) return;
+  /** Convert clientY to a snapped hour using the column rect */
+  const clientYToHour = useCallback(
+    (clientY: number): number | null => {
+      if (!colRef.current) return null;
       const rect = colRef.current.getBoundingClientRect();
-      const hour = snap15(pixelToHour(e.clientY - rect.top));
+      return snap15(pixelToHour(clientY - rect.top));
+    },
+    [pixelToHour, colRef],
+  );
+
+  const startDrag = useCallback(
+    (clientY: number) => {
+      const hour = clientYToHour(clientY);
+      if (hour === null) return;
       setDragState({ anchor: hour, current: hour });
       setSelection(null);
     },
-    [pixelToHour, colRef],
+    [clientYToHour],
   );
 
-  const handleDragMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!dragRef.current || !colRef.current) return;
-      const rect = colRef.current.getBoundingClientRect();
-      const hour = snap15(pixelToHour(e.clientY - rect.top));
+  const updateDrag = useCallback(
+    (clientY: number) => {
+      if (!dragRef.current) return;
+      const hour = clientYToHour(clientY);
+      if (hour === null) return;
       setDragState((prev) => (prev ? { ...prev, current: hour } : null));
     },
-    [pixelToHour, colRef],
+    [clientYToHour],
   );
 
-  const handleDragEnd = useCallback((): DragSelection | null => {
+  const endDrag = useCallback((): DragSelection | null => {
     const ds = dragRef.current;
     if (!ds) return null;
     const lo = Math.max(0, Math.min(ds.anchor, ds.current));
@@ -79,10 +88,10 @@ export function useDragSelection(
   // Cancel drag if mouse leaves window
   useEffect(() => {
     if (!isDragging) return;
-    const onUp = () => handleDragEnd();
+    const onUp = () => endDrag();
     document.addEventListener('mouseup', onUp);
     return () => document.removeEventListener('mouseup', onUp);
-  }, [isDragging, handleDragEnd]);
+  }, [isDragging, endDrag]);
 
   // Compute live range during drag
   const liveSelection: DragSelection | null = dragState
@@ -98,9 +107,9 @@ export function useDragSelection(
   return {
     isDragging,
     activeSelection,
-    handleDragStart,
-    handleDragMove,
-    handleDragEnd,
+    startDrag,
+    updateDrag,
+    endDrag,
     clearSelection,
   };
 }
