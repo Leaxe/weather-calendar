@@ -47,6 +47,7 @@ export function EventCardBackground({
 
   return (
     <div
+      data-event-card
       className={styles.card}
       style={{
         top: pos.top,

@@ -33,6 +33,7 @@
   position: absolute;
   z-index: var(--z-event-label);
   pointer-events: none;
+  overflow: hidden;
 }
 
 .content {

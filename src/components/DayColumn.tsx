@@ -357,6 +357,13 @@ export default function DayColumn({
     if (!el) return;
 
     const onTouchStart = (e: TouchEvent) => {
+      // Ignore touches on event cards — they have their own tap handler
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-event-card]')) {
+        touchRef.current = null;
+        return;
+      }
+
       const touch = e.touches[0];
       touchRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
       touchDraggingRef.current = false;
