@@ -81,9 +81,9 @@ export default function CalendarImport({
     : 'Select Calendar';
 
   return (
-    <div className="flex items-center overflow-hidden rounded-md border border-white/10 bg-white/5 backdrop-blur-sm">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <div className="flex cursor-pointer items-center overflow-hidden rounded-md border border-white/10 bg-white/5 backdrop-blur-sm">
           <button
             aria-label="Import calendar"
             className={`flex items-center ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'} h-8 cursor-pointer text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground`}
@@ -91,88 +91,92 @@ export default function CalendarImport({
             <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
             {!iconOnly && label}
           </button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[min(320px,calc(100vw-24px))]"
-          align="end"
-          collisionPadding={12}
-        >
-          <div className="space-y-3">
-            <div className="text-sm font-medium">Import Calendar</div>
-
-            {/* File upload */}
-            <div
-              className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-4 text-center transition-colors hover:border-muted-foreground/50"
-              onDrop={handleDrop}
-              onDragOver={(e) => e.preventDefault()}
-              onClick={() => fileRef.current?.click()}
-            >
-              <Upload className="h-5 w-5 text-muted-foreground" />
-              <div className="text-xs text-muted-foreground">
-                Drop an .ics file here or click to browse
-              </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".ics"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFile(file);
+          {source && (
+            <>
+              <div className="h-full w-px bg-border/50" />
+              <button
+                className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRefresh();
                 }}
-              />
-            </div>
+                onPointerDown={(e) => e.stopPropagation()}
+                disabled={isRefreshing}
+                aria-label="Refresh calendar"
+              >
+                <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <div className="h-full w-px bg-border/50" />
+              <button
+                className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear();
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label="Disconnect calendar"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </>
+          )}
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-[min(320px,calc(100vw-24px))]" align="end" collisionPadding={12}>
+        <div className="space-y-3">
+          <div className="text-sm font-medium">Import Calendar</div>
 
-            {/* URL input */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Link className="h-3 w-3" />
-                Or paste a calendar URL
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://calendar.google.com/..."
-                  className="h-8 text-xs"
-                  onKeyDown={(e) => e.key === 'Enter' && handleUrl()}
-                />
-                <Button
-                  size="sm"
-                  className="h-8"
-                  onClick={handleUrl}
-                  disabled={!url.trim() || loading}
-                >
-                  {loading ? '...' : 'Load'}
-                </Button>
-              </div>
+          {/* File upload */}
+          <div
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-white/10 p-4 text-center transition-colors hover:border-muted-foreground/50"
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className="h-5 w-5 text-muted-foreground" />
+            <div className="text-xs text-muted-foreground">
+              Drop an .ics file here or click to browse
             </div>
-
-            {error && <div className="text-xs text-destructive">{error}</div>}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".ics"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
+            />
           </div>
-        </PopoverContent>
-      </Popover>
-      {source && (
-        <>
-          <div className="h-full w-px bg-border/50" />
-          <button
-            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            aria-label="Refresh calendar"
-          >
-            <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
-          <div className="h-full w-px bg-border/50" />
-          <button
-            className="flex h-8 w-8 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            onClick={onClear}
-            aria-label="Disconnect calendar"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </>
-      )}
-    </div>
+
+          {/* URL input */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Link className="h-3 w-3" />
+              Or paste a calendar URL
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://calendar.google.com/..."
+                className="h-8 text-xs"
+                onKeyDown={(e) => e.key === 'Enter' && handleUrl()}
+              />
+              <Button
+                size="sm"
+                className="h-8"
+                onClick={handleUrl}
+                disabled={!url.trim() || loading}
+              >
+                {loading ? '...' : 'Load'}
+              </Button>
+            </div>
+          </div>
+
+          {error && <div className="text-xs text-destructive">{error}</div>}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -74,6 +74,14 @@ export default function App() {
             weekStartDate={weekStartDate}
             onChange={setWeekStartDate}
           />
+          <LocationPicker
+            location={location}
+            onSelect={setLocation}
+            onClear={() => setLocation(null)}
+            onRefresh={refreshWeather}
+            isRefreshing={isLoading}
+            iconOnly={isMobile}
+          />
           <CalendarImport
             source={calSource}
             isRefreshing={isRefreshing}
@@ -82,14 +90,6 @@ export default function App() {
             onRefresh={refreshCalendar}
             onClear={clearCalendar}
             iconOnly={isMobile || !!calSource}
-          />
-          <LocationPicker
-            location={location}
-            onSelect={setLocation}
-            onClear={() => setLocation(null)}
-            onRefresh={refreshWeather}
-            isRefreshing={isLoading}
-            iconOnly={isMobile}
           />
         </header>
 
