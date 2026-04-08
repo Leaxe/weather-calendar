@@ -1,16 +1,34 @@
-# React + Vite
+# Weather Calendar
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A webapp that visualizes weather on a weekly Google Calendar-style view. Calendar events overlay weather information so you can see at a glance what conditions to expect during upcoming events.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Weather-overlaid calendar** — temperature gradients, cloud/rain/snow/fog overlays rendered as canvas textures on a scrollable week grid
+- **Live weather** — powered by Open-Meteo (free, no API key required). Supports forecast (+16 days) and historical data
+- **Calendar import** — drag-and-drop .ics files or paste a calendar URL
+- **Responsive** — full week view on desktop, single-day swipeable view on mobile
+- **Hover tooltips** (desktop) — hourly weather detail follows cursor; event hover shows range summary
+- **Tap/click banner** (desktop + mobile) — sticky bottom bar with weather detail and day of week
+- **Ghost events** — click-drag (desktop) or long-press + drag (mobile) to select a time range and see aggregated weather
+- **Zoom** — Ctrl/Cmd+scroll or pinch-to-zoom adjusts hour height
+- **City search** — geocoding-powered location picker
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # type-check + production build
+npm run lint     # eslint + prettier check
+npm run format   # auto-format with prettier
+```
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React 19 + TypeScript (strict)
+- Vite 5
+- Tailwind CSS v3 + shadcn/ui
+- CSS Modules for calendar visuals
+- chroma-js for perceptually uniform color science
+- Canvas API for weather overlay textures
