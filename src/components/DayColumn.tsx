@@ -522,9 +522,6 @@ export default function DayColumn({
         {hasWeather && <SunMarker hour={dayData.sunrise} type="sunrise" />}
         {hasWeather && <SunMarker hour={dayData.sunset} type="sunset" />}
 
-        {/* Now indicator (z:7) */}
-        <NowIndicator dayDate={dayData.date} />
-
         {/* Ghost event from drag selection */}
         {hasWeather &&
           activeSelection &&
@@ -541,6 +538,9 @@ export default function DayColumn({
           />
         ))}
       </div>
+
+      {/* Now indicator — outside container so dot isn't clipped */}
+      <NowIndicator dayDate={dayData.date} />
 
       {/* Hover tooltip — desktop only, independent of banner */}
       {hasWeather &&
