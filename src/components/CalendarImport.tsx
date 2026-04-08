@@ -85,6 +85,7 @@ export default function CalendarImport({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
+            aria-label="Import calendar"
             className={`flex items-center ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'} h-8 cursor-pointer text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground`}
           >
             <Calendar className="h-3.5 w-3.5 flex-shrink-0" />

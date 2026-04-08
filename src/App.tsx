@@ -99,7 +99,9 @@ export default function App() {
           </Alert>
         )}
 
-        <WeekGrid weekData={data} events={events} hasWeather={hasWeather} isMobile={isMobile} />
+        <main className="contents">
+          <WeekGrid weekData={data} events={events} hasWeather={hasWeather} isMobile={isMobile} />
+        </main>
 
         {/* Loading toast — floats over the calendar */}
         {(isLoading || isRefreshing) && (

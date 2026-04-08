@@ -73,6 +73,7 @@ export default function LocationPicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
+            aria-label="Select location"
             className={`flex h-8 cursor-pointer items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${iconOnly ? 'w-8 justify-center' : 'gap-1.5 px-3 text-xs'}`}
           >
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />

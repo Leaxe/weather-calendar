@@ -45,7 +45,7 @@ The calendar is a vertical scrollable grid (like Google Calendar week view). Eac
 - **Styling split**: CSS modules for calendar-specific visual components (DayColumn, WeekHeader, EventCard, etc.) that need complex gradients, animations, and canvas overlays. Tailwind for UI chrome (buttons, popovers, inputs). Glass theme centralized via CSS custom properties consumed by both.
 - **Live weather via Open-Meteo**: Free API, no key required. User selects a city via geocoding search; forecast is fetched and mapped to `DayData`/`HourlyData` types. Uses forecast API for future dates (+16 days) and archive API for past dates, with automatic splitting for mixed ranges.
 - **Date navigation**: Week picker with arrow buttons and a calendar popover for week selection. Weeks beyond the 16-day forecast limit are disabled. Today's date is highlighted with a blue circle (Google Calendar style).
-- **Calendar import**: Users can import .ics files or paste a calendar URL. ICS is parsed once on import; filtering to the visible week is a cheap array filter so week navigation stays fast.
+- **Calendar import**: Users can import .ics files or paste a calendar URL. ICS is parsed once on import; filtering to the visible week is a cheap array filter so week navigation stays fast. URL imports require a CORS proxy — in dev this is handled by `icsProxyPlugin` in `vite.config.ts`; in production by the `ics-proxy/` Cloudflare Worker.
 - **Zoom**: Ctrl/Cmd+scroll or pinch-to-zoom adjusts hour height (30-150px), anchored to cursor position.
 
 ## Project Structure
