@@ -31,7 +31,9 @@ function readStoredSource(): CalendarSource | null {
 }
 
 async function fetchICS(url: string, signal: AbortSignal): Promise<string> {
-  const res = await fetch(`/ics-proxy?url=${encodeURIComponent(url)}`, { signal });
+  const res = await fetch(`${import.meta.env.VITE_ICS_PROXY_URL}?url=${encodeURIComponent(url)}`, {
+    signal,
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();
 }
@@ -104,7 +106,7 @@ export function useCalendarEvents(weekStartDate: string): UseCalendarEventsResul
   }, []);
 
   const importFromUrl = useCallback(async (url: string) => {
-    const res = await fetch(`/ics-proxy?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${import.meta.env.VITE_ICS_PROXY_URL}?url=${encodeURIComponent(url)}`);
     if (!res.ok) throw new Error(`Failed to fetch calendar: HTTP ${res.status}`);
     const text = await res.text();
     localStorage.setItem(ICS_KEY, text);
